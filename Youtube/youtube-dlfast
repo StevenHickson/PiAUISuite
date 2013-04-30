@@ -1,0 +1,13 @@
+#!/bin/bash
+if [ $# -ne 2 ]
+then
+    echo "Usage : $0 <youtube_file_link> <output_file_without_extension>"
+    echo "e.g : $0 http://www.youtube.com/watch?v=D1R-jKKp3NA steve_jobs"
+else
+    #outputfile=".avi"
+    todnload=`youtube-dl -g $1 | tail -n 1 -`
+    echo "Got the file.."$todnload
+    axel -n 100 $todnload -o $2".flv" # wget -c $todnload -O $2".flv" .if you don't use axel
+    #echo "Download Completed..."
+    #ffmpeg -i $2".flv" $2$outputfile  # get the avi file
+fi

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+for var in "$@"
+do
+    if [ -z $search_string ] ; then 
+        search_string="https://www.google.com/#hl=en&safe=off&output=search&q=$var"
+    else 
+        search_string="$search_string+$var"
+    fi
+done
+
+midori -a "$search_string"

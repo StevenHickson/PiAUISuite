@@ -1,0 +1,9 @@
+Alternative User Interface
+Requires boost and curl and xterm
+If you don't have dependencies installed (you may need to find a different version of boost)
+try running sudo apt-get install libboost1.50-dev curl xterm
+
+
+Copyright
+GPLv3
+Steven Hickson

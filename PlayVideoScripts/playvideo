@@ -1,0 +1,175 @@
+#!/bin/bash
+
+set_bool=0
+random_bool=0
+season_bool=0
+episode_bool=0
+season_set=0
+episode_set=0
+play_mult_bool=0
+play_first=0
+continue_bool=0
+continue_set=0
+
+if [ -z $DISPLAY ] ; then
+    run_command="omxplayer -r -o hdmi"
+else
+    echo "Running xterm"
+    run_command="xterm -fullscreen -bg black -fg black -e omxplayer -r -o hdmi"
+fi
+
+for var in "$@"
+do
+	if [ "$var" == "-h" ] || [ "$var" == "-help" ] || [ "$var" == "--help" ] ; then
+		man playvideo
+	elif [ "$var" == "-Set" ] || [ "$var" == "-set" ] ; then
+		set_bool=1
+	elif [ $set_bool == 1 ] ; then
+		#echo "Must run this as root or using sudo to use the set flag!"
+        echo "Creating locate database (This may take a couple of minutes) ..."
+		#if [ -z $PLAY_PATH ] ; then
+        #    echo "export PLAY_PATH=$HOME" | sudo tee -a /etc/profile >/dev/null
+        #    `source /etc/profile`
+        #fi
+        db_path="$HOME/.media.db"
+        sudo updatedb --localpaths="$var" --output="$db_path"
+        echo "Done creating database, setting up cron update ..."
+        if [ -e "/etc/cron.daily/updatelocaldb" ] ; then
+            sudo rm -f "/etc/cron.daily/updatelocaldb"
+        fi
+        cronjob="#!/bin/sh
+        #
+        # cron script to save a update local database.
+        #
+        # Written by Steven Hickson <me@stevenhickson.com> for the playvideo project.
+        #
+		updatedb --localpaths=$var --output=$HOME/.media.db" 
+        echo "$cronjob" | sudo tee -a /etc/cron.daily/updatelocaldb >/dev/null
+        sudo sh -c 'chmod +x /etc/cron.daily/updatelocaldb'
+		echo "Done setting up!"
+		set_bool=0
+		exit 0
+	elif [ "$var" == "-r" ] || [ "$var" == "-random" ] ; then
+		random_bool=1	
+	elif [ "$var" == "-c" ] || [ "$var" == "-continue" ] ; then
+		continue_bool=1	
+	elif [ "$var" == "-Season" ] || [ "$var" == "-S" ] || [ "$var" == "-season" ] || [ "$var" == "-s" ] ; then 
+		season_bool=1
+	elif [ "$var" == "-Episode" ] || [ "$var" == "-E" ] || [ "$var" == "-episode" ] || [ "$var" == "-e" ] ; then
+		episode_bool=1
+	elif [ $continue_bool == 1 ] ; then
+		continue_bool=0
+		continue_set="$var"
+	elif [ $season_bool == 1 ] ; then
+		season_bool=0
+		season_set="$var"
+	elif [ $episode_bool == 1 ] ; then
+		episode_bool=0
+		episode_set="$var"
+	elif [ "$var" == "-m" ] || [ "$var" == "-multi" ] ; then
+		play_mult_bool=1
+	elif [ "$var" == "-f" ] || [ "$var" == "-first" ] ; then
+		play_first=1
+	else
+        if [ -z $play_string ] ; then
+            play_string="$var"
+        else
+            play_string="$play_string*$var"
+        fi
+    fi
+done    
+        if [ $continue_set -gt 0 ] && [ $episode_set == 0 ] && [ $play_mult_bool == 0 ] ; then
+            echo "Error: continue flag requires either the multiple flag or the season and episode flag"
+            exit 0
+        fi
+        if [ $continue_set -gt 0 ] && [ $season_set == 0 ] && [ $play_mult_bool == 0 ] ; then
+            echo "Error: continue flag requires either the multiple flag or the season and episode flag"
+            exit 0
+        fi
+		if [ $season_set == 0 ] && [ $episode_set == 0 ] ; then  
+			play_file=`locate -i -d ~/.media.db "*$play_string*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.flv$\|.m4v$"`
+		elif [ $episode_set == 0 ] ; then
+			echo "Finding Season: $season_set"
+            tmp1=`locate -i -d ~/.media.db "*$play_string*S$season_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+            tmp2=`locate -i -d ~/.media.db "*$play_string*S0$season_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+            
+		    play_file="$tmp1$tmp2"
+            if [ -z "$play_file" ] ; then
+                play_file=`locate -i -d ~/.media.db "*$play_string*Season*$season_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+            fi
+		else
+			echo "Finding Season: $season_set Episode: $episode_set"
+			tmp1=`locate -i -d ~/.media.db "*$play_string*S$season_set*E$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+            x_char="x"
+            tmp2=`locate -i -d ~/.media.db "*$play_string*$season_set$x_char$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+		    play_file="$tmp1$tmp2"
+            if [ -z "$play_file" ] ; then
+			    tmp1=`locate -i -d ~/.media.db "*$play_string*S$season_set*E0$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+                x_char="x0"
+                tmp2=`locate -i -d ~/.media.db "*$play_string*$season_set$x_char$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+		        play_file="$tmp1$tmp2"
+            fi
+            if [ -z "$play_file" ] ; then
+			    tmp1=`locate -i -d ~/.media.db "*$play_string*Season*$season_set*E$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+			    tmp2=`locate -i -d ~/.media.db "*$play_string*Season*$season_set*E0$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+                play_file="$tmp1$tmp2"
+            fi
+            if [ -z "$play_file" ] ; then
+			    tmp1=`locate -i -d ~/.media.db "*$play_string*Season*$season_set*Episode[^0-9]$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+			    tmp2=`locate -i -d ~/.media.db "*$play_string*Season*$season_set*Episode[^0-9]0$episode_set[^0-9]*" | grep ".mp4$\|.avi$\|.mkv$\|.mp3$\|.mov$\|.mpg$\|.m4v$"`
+                play_file="$tmp1$tmp2"
+            fi
+        fi
+		num_files=`echo "$play_file" | wc -l`
+        if [ $num_files -gt 1 ] ; then
+			echo "$num_files Results"
+			if [ $random_bool == 1 ] ; then
+				play_file=`echo "$play_file" | sort --random-sort`
+			fi
+			
+			if [ $play_first == 1 ] ; then
+				play_file=`echo "$play_file" | head -1`
+				$run_command "$play_file"
+				exit 0
+			elif [ $play_mult_bool == 1 ] ; then
+                if [ $continue_set -gt 0 ] ; then
+                    total_run=$continue_set
+                else
+                    total_run=$num_files
+                fi
+				for ((  i = 1 ;  i <= $total_run;  i++  ))
+				do
+					current_play=`echo "$play_file" | head -"$i" | tail -1`
+					$run_command "$current_play"
+				done
+				exit 0	
+			else
+
+				read -p "Multiple Returns, Displaying all, select the appropriate number to play (press [Enter] to display) ..."
+				for ((  i = 1 ;  i <= $num_files;  i++  ))
+				do
+					current_play=`echo "$play_file" | head -"$i" | tail -1`
+					echo "$i: $current_play\n"
+				done
+				read selection
+				current_play=`echo "$play_file" | head -"$selection" | tail -1`
+				$run_command "$current_play"
+                if [ $continue_set -gt 0 ] ; then
+                    new_episode=`expr $episode_set + 1`
+                    new_continue=`expr $continue_set - 1`
+                    `playvideo -c $new_continue -s $season_set -e $new_episode "$play_string"`
+                fi
+				exit 0
+			fi
+			
+        elif [ -e "$play_file" ] ; then
+            $run_command "$play_file"
+            if [ $continue_set -gt 1 ] ; then
+                new_episode=`expr $episode_set + 1`
+                new_continue=`expr $continue_set - 1`
+                `playvideo -c $new_continue -s $season_set -e $new_episode "$play_string"`
+            fi
+			exit 0
+        else
+            echo "Error, didn't find video"
+		fi
