@@ -26,5 +26,6 @@ sudo rm -f /usr/bin/youtube-search
 echo "Uninstalling voicecommand scripts"
 sudo rm -f /usr/bin/voicecommand
 sudo rm -f /usr/bin/google
+sudo rm -f /usr/bin/tts
 sudo rm -f /usr/bin/speech-recog.sh
 

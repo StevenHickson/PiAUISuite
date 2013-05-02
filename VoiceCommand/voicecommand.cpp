@@ -141,8 +141,9 @@ void VoiceCommand::GetConfig() {
     path += "/.commands.conf";
     fp = fopen(path.c_str(),"r");
     if(fp == NULL) {
-        printf("Can't find config file commands.conf!\n");
-        exit(-1);
+        printf("Can't find config file commands.conf!\nI'll make one.\n");
+        EditConfig();
+        exit(0);
     }
     char v[200],c[200];
     while(fscanf(fp,"%[^=\n]=%[^=\n]\n",v,c) != EOF) {
