@@ -3,7 +3,7 @@ Includes voicecommand, download, playvideo, and textcommand scripts
 
 this Requires boost, curl, xterm, espeak, and some other things
 If you don't have dependencies installed (you may need to find a different version of boost)
-try running sudo apt-get install libboost1.50-dev libboost-regex1.50-dev youtube-dl axel curl xterm espeak
+try running sudo apt-get install libboost1.50-dev libboost-regex1.50-dev youtube-dl axel curl xterm libcurl4-openssl-dev mpg123 flac
 
 To install:
 cd Install; ./InstallAUISuite.sh

@@ -10,7 +10,7 @@ if [ -z $install_method ] ; then
 echo "Install dependencies? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
-    sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123
+    sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-openssl-dev flac
 fi
 fi
 
