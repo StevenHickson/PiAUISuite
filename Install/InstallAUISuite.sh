@@ -10,7 +10,7 @@ if [ -z $install_method ] ; then
 echo "Install dependencies? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
-    sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel espeak
+    sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123
 fi
 fi
 
@@ -117,7 +117,11 @@ read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp ../VoiceCommand/voicecommand /usr/bin/
     sudo cp ../VoiceCommand/google /usr/bin/
+    sudo cp ../VoiceCommand/tts /usr/bin/
     sudo cp ../VoiceCommand/speech-recog.sh /usr/bin/
+    if [ -z "$HOME/.commands.conf" ] ; then
+        cp ../VoiceCommand/commands.conf "$HOME/.commands.conf"
+    fi
 else
     echo "Skipping voicecommand install"
 fi
