@@ -7,52 +7,65 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
+static const char *optString = "cvet:h?";
+
+inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
+    printf("Found audio\n");
+    system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
+    cmd = popen("speech-recog.sh","r");
+    fscanf(cmd,"\"%[^\"\n]\"\n",message);
+    vc.ProcessMessage(message);
+    fclose(cmd);
+}
+
 int main(int argc, char* argv[]) {
+    VoiceCommand vc;
+    //command line options
+    vc.CheckCmdLineParam(argc,argv);
+    
     FILE *cmd = NULL;
     char message[200];
 
-    VoiceCommand vc;
     vc.GetConfig();
     //vc.CheckConfig();
-    bool continuous = false;
-    if(argc == 2 && strcmp(argv[1],"-c") == 0) {
+    if(vc.edit) {
+        vc.EditConfig();
+    } else if(vc.continuous) {
         printf("running in continuous mode\n");
-        continuous = true;
+        if(vc.verify)
+            printf("verifying command as well\n");
         float volume = 0.0f;
         changemode(1);
-        while(continuous) {
+        while(vc.continuous) {
             system("arecord -D plughw:1,0 -f cd -t wav -d 2 -r 16000 /dev/shm/noise.wav 1>/dev/null 2>/dev/null");
             cmd = popen("sox /dev/shm/noise.wav -n stats -s 16 2>&1 | awk '/^Max\\ level/ {print $3}'","r");
             fscanf(cmd,"%f",&volume);
             fclose(cmd);
-            if(volume > 0.7f) {
-                /*system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>/dev/null 2>/dev/null");
-                cmd = popen("wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=en | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'","r");
-                if(cmd == NULL)
-                    printf("ERROR\n");
-                fscanf(cmd,"\"%[^\"\n]\"\n",message);
-                fclose(cmd);
-                if(strcmp(message,"pi") == 0) {*/
-                    printf("Found audio\n");
-                    system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
-                    cmd = popen("speech-recog.sh","r");
+            if(volume > vc.thresh) {
+                if(vc.verify) {
+                    system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>/dev/null 2>/dev/null");
+                    cmd = popen("wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=en | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'","r");
+                    if(cmd == NULL)
+                        printf("ERROR\n");
                     fscanf(cmd,"\"%[^\"\n]\"\n",message);
-                    vc.ProcessMessage(message);
                     fclose(cmd);
-                //}
+                    if(strcmp(message,"pi") == 0) {
+                        message[0] = '\0'; //this will clear the first bit
+                        ProcessVoice(cmd,vc,message);
+                    }
+                } else {
+                    ProcessVoice(cmd,vc,message);
+                }
                 message[0] = '\0'; //this will clear the first bit
             }
             if(kbhit()) {
                 if(getchar() == 27) {
                     printf("Escaping\n");
-                    continuous = false;
+                    vc.continuous = false;
                     changemode(0);
                 }
             }
         }
-    } else if(argc == 2 && strcmp(argv[1],"-e") == 0) {
-        //Edit the config file
-        vc.EditConfig();
     } else {
         //system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
         cmd = popen("speech-recog.sh","r");
@@ -64,9 +77,45 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
+    //check command line configs
+    int opt=0;
+    continuous=false;
+    verify=false;
+    edit=false;
+    opt = getopt( argc, argv, optString );
+    while( opt != -1 ) {
+        switch( opt ) {
+            case 'c':
+                continuous = true;
+                break;
+            case 'v':
+                verify = true;
+                break;
+            case 'e':
+                edit = true;
+                break;
+            case 't':
+                thresh = atof(optarg);
+                break;
+            case 'h': 
+            case '?':
+                DisplayUsage();
+                break;
+            default:
+                break;
+        }
+        opt = getopt( argc, argv, optString );
+    }    
+}
+
+void VoiceCommand::DisplayUsage() {
+}
+
 VoiceCommand::VoiceCommand() {
     hcurl = NULL;
     debug = 0;
+    thresh = 0.7f; //my default value
 }
 
 VoiceCommand::~VoiceCommand() {
@@ -123,9 +172,14 @@ inline void VoiceCommand::ProcessMessage(char* message) {
         }
         ++i;
     }
-    printf("Attempting to answer: %s\n",message);
-    Init();
-    Search(message);
+    string checkit = string(message);
+    if(message != NULL && !checkit.empty()) {
+        printf("Attempting to answer: %s\n",message);
+        Init();
+        Search(message);
+    } else {
+        printf("No translation\n");
+    }
 }
 
 void VoiceCommand::GetConfig() {

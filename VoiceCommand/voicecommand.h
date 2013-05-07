@@ -25,6 +25,11 @@ private:
 protected:
     string version;
 public:
+    bool continuous;                /* -c option */
+    bool verify;                    /* -v option */
+    bool edit;                      /* -e option */
+    float thresh;
+    
     char errorbuf[CURL_ERROR_SIZE];
     string curlbuf;
 
@@ -36,6 +41,8 @@ public:
     void GetConfig();
     void EditConfig();
     void CheckConfig();
+    void CheckCmdLineParam(int argc, char* argv[]);
+    void DisplayUsage();
 
     int Search(const char* search);
     int Init(void);

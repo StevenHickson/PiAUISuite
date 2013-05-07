@@ -2,7 +2,7 @@
 BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 
 gvapi: voicecommand.cpp voicecommand.h
-	g++ $(BLDDEF) -g -Wall -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -lcurl -lboost_regex -o voicecommand voicecommand.cpp
+	g++ $(BLDDEF) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -lcurl -lboost_regex -o voicecommand voicecommand.cpp
 
 clean:
 	rm *.o voicecommand 2>/dev/null
