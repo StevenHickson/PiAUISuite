@@ -124,7 +124,7 @@ done
         if [ $num_files -gt 1 ] ; then
 			echo "$num_files Results"
 			if [ $random_bool == 1 ] ; then
-				play_file=`echo "$play_file" | sort --random-sort`
+				play_file=`echo "$play_file" | shuf --random-source=/dev/urandom`
 			fi
 			
 			if [ $play_first == 1 ] ; then

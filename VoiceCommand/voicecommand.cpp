@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
                 fclose(cmd);
                 if(strcmp(message,"pi") == 0) {*/
                     printf("Found audio\n");
-                    system("tts \"FILLER FILL Ready?\" 2>/dev/null 1>/dev/null");
+                    system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
                     cmd = popen("speech-recog.sh","r");
                     fscanf(cmd,"\"%[^\"\n]\"\n",message);
                     vc.ProcessMessage(message);
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         //Edit the config file
         vc.EditConfig();
     } else {
-        //system("tts \"FILLER FILL Ready?\" 2>/dev/null 1>/dev/null");
+        //system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
         cmd = popen("speech-recog.sh","r");
         fscanf(cmd,"\"%[^\"\n]\"\n",message);
         vc.ProcessMessage(message);
@@ -231,7 +231,7 @@ int VoiceCommand::Search(const char* search) {
     if (regex_search(curlbuf.c_str(), m, rexp)) {
         string t = string(m[1]);
         printf("%s\n", t.c_str());
-        string speak = "tts \"FILLER FILL ";
+        string speak = "tts \"FILL ";
         replaceAll(t,"\\n"," ");
         replaceAll(t,"|"," ");
         replaceAll(t,"\\"," ");

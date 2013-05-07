@@ -1,0 +1,8 @@
+Email checking script
+Facebook posting script
+GUI interaction
+Make case insensitive
+Add verify flag -v
+Add custom config file location flag -f
+Add comments option in config file and make less strict
+Make TTS work for more than 100 characters
