@@ -7,7 +7,7 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "cvet:h?";
+static const char *optString = "cveit:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -63,6 +63,14 @@ int main(int argc, char* argv[]) {
                     printf("Escaping\n");
                     vc.continuous = false;
                     changemode(0);
+                } else if(getchar() == 'v') {
+                    if(vc.verify) {
+                        printf("Turning verify off\n");
+                        vc.verify = false;
+                    } else {
+                        printf("Turning verify on\n");
+                        vc.verify = true;
+                    }
                 }
             }
         }
@@ -94,6 +102,9 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 break;
             case 'e':
                 edit = true;
+                break;
+            case 'i':
+                ignoreOthers = true;
                 break;
             case 't':
                 thresh = atof(optarg);
@@ -172,6 +183,8 @@ inline void VoiceCommand::ProcessMessage(char* message) {
         }
         ++i;
     }
+    if(ignoreOthers)
+        return;
     string checkit = string(message);
     if(message != NULL && !checkit.empty()) {
         printf("Attempting to answer: %s\n",message);

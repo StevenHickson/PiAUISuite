@@ -25,9 +25,10 @@ private:
 protected:
     string version;
 public:
-    bool continuous;                /* -c option */
-    bool verify;                    /* -v option */
-    bool edit;                      /* -e option */
+    bool continuous;
+    bool verify;
+    bool edit;
+    bool ignoreOthers;
     float thresh;
     
     char errorbuf[CURL_ERROR_SIZE];
