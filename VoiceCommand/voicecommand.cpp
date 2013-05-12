@@ -7,11 +7,14 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "cveit:h?";
+static const char *optString = "cveit:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
-    system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
+    string command = "tts \"FILL ";
+    command += vc.response;
+    command += "\" 2>/dev/null 1>/dev/null";
+    system(command.c_str());
     cmd = popen("speech-recog.sh","r");
     fscanf(cmd,"\"%[^\"\n]\"\n",message);
     vc.ProcessMessage(message);
@@ -49,7 +52,7 @@ int main(int argc, char* argv[]) {
                         printf("ERROR\n");
                     fscanf(cmd,"\"%[^\"\n]\"\n",message);
                     fclose(cmd);
-                    if(strcmp(message,"pi") == 0) {
+                    if(strcmp(message,vc.keyword.c_str()) == 0) {
                         message[0] = '\0'; //this will clear the first bit
                         ProcessVoice(cmd,vc,message);
                     }
@@ -109,6 +112,15 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 't':
                 thresh = atof(optarg);
                 break;
+            case 'k':
+                keyword = string(optarg);
+                break;
+            case 'f':
+                config_file = string(optarg);
+                break;
+            case 'r':
+                response = string(optarg);
+                break;
             case 'h': 
             case '?':
                 DisplayUsage();
@@ -126,7 +138,17 @@ void VoiceCommand::DisplayUsage() {
 VoiceCommand::VoiceCommand() {
     hcurl = NULL;
     debug = 0;
-    thresh = 0.7f; //my default value
+    //Below are my default values if not changed by user
+    thresh = 0.7f;
+    keyword = "pi";
+    response = "Ready?";
+    char *passPath = getenv("HOME");
+    if(passPath == NULL) {
+        printf("Could not get $HOME\n");
+        exit(-1);
+    }
+    config_file = string(passPath);
+    config_file += "/.commands.conf";
 }
 
 VoiceCommand::~VoiceCommand() {
@@ -198,17 +220,9 @@ inline void VoiceCommand::ProcessMessage(char* message) {
 void VoiceCommand::GetConfig() {
     printf("Opening config file...\n");
     FILE* fp;
-    char *passPath;
-    passPath = getenv("HOME");
-    if(passPath == NULL) {
-        printf("Could not get $HOME\n");
-        exit(-1);
-    }
-    string path = string(passPath);
-    path += "/.commands.conf";
-    fp = fopen(path.c_str(),"r");
+    fp = fopen(config_file.c_str(),"r");
     if(fp == NULL) {
-        printf("Can't find config file commands.conf!\nI'll make one.\n");
+        printf("Can't find config file!\nI'll make one.\n");
         EditConfig();
         exit(0);
     }
@@ -222,19 +236,11 @@ void VoiceCommand::GetConfig() {
 
 void VoiceCommand::EditConfig() {
     printf("Editing config file...\n");
-    char *passPath;
-    passPath = getenv("HOME");
-    if(passPath == NULL) {
-        printf("Could not get $HOME\n");
-        exit(-1);
-    }
-    string path = string(passPath);
     printf("This lets you edit the config file.\nThe format is voice=command\nYou can use any character except for newlines or =\n");
     printf("Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
-    edit_command += string(passPath);
-    edit_command += "/.commands.conf";
+    edit_command += config_file;
     system(edit_command.c_str());
 }
 

@@ -30,6 +30,9 @@ public:
     bool edit;
     bool ignoreOthers;
     float thresh;
+    string keyword;
+    string config_file;
+    string response;
     
     char errorbuf[CURL_ERROR_SIZE];
     string curlbuf;
