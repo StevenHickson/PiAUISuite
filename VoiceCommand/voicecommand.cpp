@@ -7,14 +7,16 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "cveit:k:r:f:h?";
+static const char *optString = "cveiqt:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
-    string command = "tts \"FILL ";
-    command += vc.response;
-    command += "\" 2>/dev/null 1>/dev/null";
-    system(command.c_str());
+    if(!vc.quiet) {
+        string command = "tts \"FILL ";
+        command += vc.response;
+        command += "\" 2>/dev/null 1>/dev/null";
+        system(command.c_str());
+    }
     cmd = popen("speech-recog.sh","r");
     fscanf(cmd,"\"%[^\"\n]\"\n",message);
     vc.ProcessMessage(message);
@@ -31,6 +33,10 @@ int main(int argc, char* argv[]) {
 
     vc.GetConfig();
     //vc.CheckConfig();
+    if(vc.quiet)
+        printf("running in quiet mode\n");
+    if(vc.ignoreOthers)
+        printf("Not querying for answers\n");
     if(vc.edit) {
         vc.EditConfig();
     } else if(vc.continuous) {
@@ -109,10 +115,15 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'i':
                 ignoreOthers = true;
                 break;
+            case 'q':
+                quiet = true;
+                break;
             case 't':
                 thresh = atof(optarg);
                 break;
             case 'k':
+                continuous = true;
+                verify = true;
                 keyword = string(optarg);
                 break;
             case 'f':
@@ -133,6 +144,8 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
 }
 
 void VoiceCommand::DisplayUsage() {
+    system("man voicecommand");
+    exit(0);
 }
 
 VoiceCommand::VoiceCommand() {
@@ -141,7 +154,8 @@ VoiceCommand::VoiceCommand() {
     //Below are my default values if not changed by user
     thresh = 0.7f;
     keyword = "pi";
-    response = "Ready?";
+    response = "Yes sir?";
+    quiet = false;
     char *passPath = getenv("HOME");
     if(passPath == NULL) {
         printf("Could not get $HOME\n");
@@ -219,24 +233,57 @@ inline void VoiceCommand::ProcessMessage(char* message) {
 
 void VoiceCommand::GetConfig() {
     printf("Opening config file...\n");
-    FILE* fp;
-    fp = fopen(config_file.c_str(),"r");
-    if(fp == NULL) {
+    ifstream file(config_file.c_str(),ios::in);
+    if(!file.is_open()) {
         printf("Can't find config file!\nI'll make one.\n");
         EditConfig();
         exit(0);
     }
-    char v[200],c[200];
-    while(fscanf(fp,"%[^=\n]=%[^=\n]\n",v,c) != EOF) {
-        voice.push_back(v);
-        commands.push_back(c);
+    string line;
+    int i = 1;
+    while(getline(file, line)) {
+        unsigned int loc = line.find("==");
+        if(line[0] == '!') {
+            //This is a special config option
+            //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word.
+            string tmp = line.substr(0,8);
+            if(tmp.compare("!quiet==") == 0)
+                quiet = bool(atoi(line.substr(8).c_str()));
+            tmp = line.substr(0,9);
+            if(tmp.compare("!verify==") == 0)
+                verify = bool(atoi(line.substr(9).c_str()));
+            if(tmp.compare("!ignore==") == 0)
+                ignoreOthers = bool(atoi(line.substr(9).c_str()));
+            if(tmp.compare("!thresh==") == 0)
+                thresh = atof(line.substr(9).c_str());
+            tmp = line.substr(0,10);
+            if(tmp.compare("!keyword==") == 0)
+                keyword = line.substr(10);
+            tmp = line.substr(0,11);
+            if(tmp.compare("!response==") == 0)
+                response = line.substr(11).c_str();
+            tmp = line.substr(0,13);
+            if(tmp.compare("!continuous==") == 0)
+                continuous = bool(atoi(line.substr(13).c_str()));
+        } else if(line[0] != '#' && loc != string::npos) {
+            //This isn't a comment and is formatted properly
+            string v = line.substr(0,loc);
+            string c = line.substr(loc + 2);
+            voice.push_back(v);
+            commands.push_back(c);
+        } else if(line[0] != '#') {
+            printf("You have a formatting error on line %d of your config file. I'm ignoring that line\n",i);
+        }
+        ++i;
     }
-    fclose(fp);
+    file.close();
 }
 
 void VoiceCommand::EditConfig() {
     printf("Editing config file...\n");
-    printf("This lets you edit the config file.\nThe format is voice=command\nYou can use any character except for newlines or =\n");
+    printf("This lets you edit the config file.\nThe format is voice==command\nYou can use any character except for newlines or ==\n");
+    printf("You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n");
+    printf("!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?\n");
     printf("Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
@@ -248,7 +295,7 @@ void VoiceCommand::CheckConfig() {
     printf("Commands: \n");
     if(voice.size() > 0) {
         for(unsigned int i = 0; i < voice.size(); i++) {
-            printf("%s=%s\n",voice[i].c_str(),commands[i].c_str());
+            printf("%s==%s\n",voice[i].c_str(),commands[i].c_str());
         }
     }
 }
@@ -304,13 +351,15 @@ int VoiceCommand::Search(const char* search) {
     if (regex_search(curlbuf.c_str(), m, rexp)) {
         string t = string(m[1]);
         printf("%s\n", t.c_str());
-        string speak = "tts \"FILL ";
-        replaceAll(t,"\\n"," ");
-        replaceAll(t,"|"," ");
-        replaceAll(t,"\\"," ");
-        speak += t;
-        speak += "\" 2>/dev/null";
-        system(speak.c_str());
+        if(!quiet) {
+            string speak = "tts \"FILL ";
+            replaceAll(t,"\\n"," ");
+            replaceAll(t,"|"," ");
+            replaceAll(t,"\\"," ");
+            speak += t;
+            speak += "\" 2>/dev/null";
+            system(speak.c_str());
+        }
         return 0;
     } else {
         cout << "Could not find answer. Try again.\n";

@@ -1,0 +1,95 @@
+.\" Manpage for playvideo.
+.\" Contact me@stevenhickson to add input or correct errors or typos.
+.TH man 8 "13 May 2013" "2.0" "voicecommand man page"
+.SH NAME
+voicecommand \- Listen to user defined strings and run the corresponding command
+.SH SYNOPSIS
+.I "voicecommand [OPTIONS]..."
+.SH DESCRIPTION
+voicecommand was developed for the Raspberry Pi but will work on any linux system with a microphone attached. It is a crude program, which uses basic comparisons to determine if your voicecommand fits a format specified in a config file; it it does, it runs the corresponding linux command. It supports auto-completion and variables as well as command verification, a continuous mode, and other options.
+For help/comments/questions, feel free to e-mail me at me@stevenhickson.com. I answer sporadically but do eventually respond.
+.PP
+.SH OPTIONS
+.TP
+.I "-?"
+Same as -h
+
+.TP
+.I "-c"
+Makes voicecommand run in continuous mode, where it will keep listening over and over again.
+
+.TP
+.I "-e"
+Edits the voicecommand config file.
+.br
+The format is voice==command
+.br
+You can use any character except for newlines or ==
+.br
+You can also put comments if the line starts with # and special options if the line starts with a !
+.br
+Default options are shown as follows:
+.br
+!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?
+keyword and response accept strings. verify, continuous, quiet, and ignore except 1 or 0 (true or false respectively). thresh excepts a floating point number. These allow you to set some of the flags as permanent options (though the flags can overwrite them temporarily).
+
+.TP
+.I "-f /my-location/config-file
+.br
+This allows you to load a different config file located in a different spot. The default one is in your home directory and is ~/.commands.conf
+.br
+The config file must be formatted the same way.
+
+.TP
+.I "-h"
+.br
+Shows this man page.
+
+.TP
+.I "-i"
+.br
+Sets the ignore mode. When this flag is activated, if a command is not in the config file, nothing happens. The default behavior is to try to find an answer or response to that question and then speak it. This turns off that behavior.
+
+.TP
+.I "-k word"
+.br
+Sets the keyword. The default is pi. If this flag is set, the verify and continuous flags are also set since this is only checked during those two modes. 
+.br
+.I "	Ex. voicecommand -c -v -k Jarvis"
+
+.TP
+.I "-r word"
+.br
+Sets the response. The default is "Yes Sir?" (For version 1.0, it was Ready?. If this response is more than one word, it should be put in quotes, otherwise it doesn't need to be
+.br
+.I "	Ex. voicecommand -r Ready?"
+
+.TP
+.I "-t #"
+.br
+Sets the threshold for volume to determine if the keyword was spoken. This should be a floating point number. The default value is 0.7 which works well with the Logitech C310 camera/mic from about 6 feet away.
+.br
+.I "    Ex. voicecommand -t 1.2"
+
+.TP
+.I "-q"
+.br
+Sets quiet mode on so that voicecommand never speaks through the audio output. It still prints everything but doesn't ever respond. This includes the keyword response.
+
+.TP
+.I "-v"
+.br
+Makes voicecommand verify the keyword. This only happens in continuous mode so if this flag is set, the continuous flag will be set as well. The default mode is to not verify. When voicecommand hears any sound above the threshold, it says the response then listens for a command. The default keyword is pi. When the verify flag is set, after the threshold is met, voicecommand verifies that the keyword was spoken. 
+
+.SH AUTHOR
+.I "Steven Hickson (me@stevenhickson.com)"
+.SH BUGS
+No known bugs. To report bugs, send a clear description to me@stevenhickson.com
+Since this program is fairly crude, user typos could cause crashes/failed responses. Please read the man page thoroughly before submitting a bug.
+.SH COPYRIGHT
+Copyright ©  2013 Steven Hickson. License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it as long as you give credit to the author and include this license.  There is NO WARRANTY, to the extent permitted by law.
+.SH HISTORY
+This is the second major version of this program
+.SH SEE ALSO
+http://stevenhickson.blogspot.com/

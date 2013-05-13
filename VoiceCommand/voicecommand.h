@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 #include <boost/regex.hpp>
 #include <vector>
 #include <string>
@@ -29,6 +30,7 @@ public:
     bool verify;
     bool edit;
     bool ignoreOthers;
+    bool quiet;
     float thresh;
     string keyword;
     string config_file;
