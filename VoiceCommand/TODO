@@ -2,14 +2,8 @@ Email checking script
 Facebook posting script
 GUI interaction
 Make speech commands case insensitive
-Add custom config file location flag -f
-Add comments option in config file and make it less strict
 Take answer functionality out and make it it's own program
 Figure out audio bug which skips first couple of seconds
 Figure out how to cancel out audio coming from speakers, like music (long long term)
 Look into FFT comparison for keyword
-Allow keyword to be changed
-Allow options to be specified in config file
-Allow answer functionality to be turned off
-Allow quiet mode where it doesn't speak
 Create repository
