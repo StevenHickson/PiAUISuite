@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#for the Raspberry Pi, we need to insert some sort of FILLER here since it cuts off the first bit of audio
+
+string=$@
+len=${#string}
+while [ $len -ge 92 ] ;
+do
+    #lets split this up so that its a maximum of 99 characters
+    tmp=${string:0:92}
+    string=${string:92}
+    
+    #now we need to make sure there aren't split words, let's find the last space and the string after it
+    lastspace=${tmp##* }
+    tmplen=${#lastspace}
+
+    #here we are shortening the tmp string
+    tmplen=`expr 92 - $tmplen` 
+    tmp=${tmp:0:tmplen}
+    
+    #now we concatenate and the string is reconstructed
+    string="$lastspace$string"
+    len=${#string}
+    
+    #speak the first 100 characters
+    mpg123 -q "http://translate.google.com/translate_tts?tl=en&q=$tmp"
+done
+#this will get the last remnants
+mpg123 -q "http://translate.google.com/translate_tts?tl=en&q=$string"

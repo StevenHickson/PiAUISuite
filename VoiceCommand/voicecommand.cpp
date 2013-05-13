@@ -7,12 +7,16 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "cveiqt:k:r:f:h?";
+static const char *optString = "bcveiqt:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
     if(!vc.quiet) {
-        string command = "tts \"FILL ";
+        string command;
+        if(vc.filler)
+            command = "tts \"FILL ";
+        else
+            command = "tts-nofill \"";
         command += vc.response;
         command += "\" 2>/dev/null 1>/dev/null";
         system(command.c_str());
@@ -97,12 +101,12 @@ int main(int argc, char* argv[]) {
 void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
     //check command line configs
     int opt=0;
-    continuous=false;
-    verify=false;
-    edit=false;
     opt = getopt( argc, argv, optString );
     while( opt != -1 ) {
         switch( opt ) {
+            case 'b':
+                filler = false;
+                break;
             case 'c':
                 continuous = true;
                 break;
@@ -156,6 +160,10 @@ VoiceCommand::VoiceCommand() {
     keyword = "pi";
     response = "Yes sir?";
     quiet = false;
+    filler = true;
+    continuous = false;
+    verify = false;
+    edit = false;
     char *passPath = getenv("HOME");
     if(passPath == NULL) {
         printf("Could not get $HOME\n");
@@ -256,6 +264,8 @@ void VoiceCommand::GetConfig() {
                 ignoreOthers = bool(atoi(line.substr(9).c_str()));
             if(tmp.compare("!thresh==") == 0)
                 thresh = atof(line.substr(9).c_str());
+            if(tmp.compare("!filler==") == 0)
+                filler = atof(line.substr(9).c_str());
             tmp = line.substr(0,10);
             if(tmp.compare("!keyword==") == 0)
                 keyword = line.substr(10);
@@ -352,7 +362,11 @@ int VoiceCommand::Search(const char* search) {
         string t = string(m[1]);
         printf("%s\n", t.c_str());
         if(!quiet) {
-            string speak = "tts \"FILL ";
+            string speak;
+            if(filler) 
+                speak = "tts \"FILL ";
+            else 
+                speak ="tts-nofill \"";
             replaceAll(t,"\\n"," ");
             replaceAll(t,"|"," ");
             replaceAll(t,"\\"," ");

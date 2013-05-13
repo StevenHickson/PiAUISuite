@@ -6,6 +6,17 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+#I should first try to update the Update script
+wget https://raw.github.com/StevenHickson/PiAUISuite/master/Install/UpdateAUISuite.sh
+difference=`diff UpdateAUISuite.sh UpdateAUISuite.sh.1`
+
+if [ -e $difference ] ; then
+    unlink UpdateAUISuite.sh
+    mv UpdateAUISuite.sh.1 UpdateAUISuite.sh
+    chmod +x UpdateAUISuite.sh
+    ./UpdateAUISuite.sh
+fi
+
 if [ -e "/usr/bin/playvideo" ] ; then
     echo "Updating playvideo ..."
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/PlayVideoScripts/playvideo
@@ -43,6 +54,8 @@ if [ -e "/usr/bin/voicecommand" ] ; then
     chmod +x /usr/bin/google
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/tts
     chmod +x /usr/bin/tts
+    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/tts-nofill
+    chmod +x /usr/bin/tts-nofill
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/speech-recog.sh
     chmod +x /usr/bin/speech-recog.sh
     wget -N -P /usr/share/man/man8/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/voicecommand.8.gz

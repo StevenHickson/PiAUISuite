@@ -30,6 +30,7 @@ public:
     bool verify;
     bool edit;
     bool ignoreOthers;
+    bool filler;
     bool quiet;
     float thresh;
     string keyword;
