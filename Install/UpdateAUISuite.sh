@@ -10,11 +10,14 @@ fi
 wget https://raw.github.com/StevenHickson/PiAUISuite/master/Install/UpdateAUISuite.sh
 difference=`diff UpdateAUISuite.sh UpdateAUISuite.sh.1`
 
-if [ -e $difference ] ; then
+if [ -n "$difference" ] ; then
+    echo "I found a new version of the update script"
     unlink UpdateAUISuite.sh
     mv UpdateAUISuite.sh.1 UpdateAUISuite.sh
     chmod +x UpdateAUISuite.sh
     ./UpdateAUISuite.sh
+else
+    rm UpdateAUISuite.sh.1
 fi
 
 if [ -e "/usr/bin/playvideo" ] ; then
