@@ -19,7 +19,7 @@ Downloader::~Downloader() {
     if (hcurl) curl_easy_cleanup(hcurl);
 }
 
-//Searches for 1st download link on thepiratebay.se
+//Searches for 1st download link on thepiratebay.s
 
 int Downloader::Search(string download, string *link, bool verify) {
     if(!init)
@@ -30,8 +30,7 @@ int Downloader::Search(string download, string *link, bool verify) {
         return -1;
     }
     
-    //temporarily going from https to http since piratebay is in a state of transition
-    string torr = "http://thepiratebay.se/search/";
+    string torr = "https://thepiratebay.sx/search/";
     torr += download;
     torr += "/0/7/0";
     curl_easy_setopt(hcurl, CURLOPT_URL, torr.c_str());
