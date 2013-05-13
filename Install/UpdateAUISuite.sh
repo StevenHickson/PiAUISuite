@@ -16,6 +16,7 @@ if [ -n "$difference" ] ; then
     mv UpdateAUISuite.sh.1 UpdateAUISuite.sh
     chmod +x UpdateAUISuite.sh
     ./UpdateAUISuite.sh
+    exit
 else
     rm UpdateAUISuite.sh.1
 fi
