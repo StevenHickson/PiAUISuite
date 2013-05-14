@@ -1,7 +1,7 @@
 #GITREV  = -D'GITREV="$(shell git log -1 --pretty=format:"%h by %an on %ai")"'
 BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 
-gvapi: voicecommand.cpp voicecommand.h
+voicecommand: voicecommand.cpp voicecommand.h
 	g++ $(BLDDEF) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -lcurl -lboost_regex -o voicecommand voicecommand.cpp
 
 clean:

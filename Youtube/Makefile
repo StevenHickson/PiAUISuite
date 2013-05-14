@@ -1,7 +1,7 @@
 #GITREV  = -D'GITREV="$(shell git log -1 --pretty=format:"%h by %an on %ai")"'
 BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 
-gvapi: youtube-search.h youtube-search.cpp
+youtube-search: youtube-search.h youtube-search.cpp
 	g++ $(BLDDEF) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -lcurl -lboost_regex -o youtube-search youtube-search.cpp
 
 clean:

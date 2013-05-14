@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
 //#include <boost/regex.hpp>
 #include "gvoice.h"
 
@@ -20,6 +22,7 @@ int main(int argc, char *argv[])
 	string an,am;
 	string au,ap;		// These can be set as your GV user/passwd (so they dont have to be specified via CLI each time).
 						// eg: au="mygmailuser"; ap="mysecretpasswd";
+    bool config = true;
 
 	while((a=getopt(argc,argv, "d::hvu:p:rcol:k:n:m:")) != -1)
 	{
@@ -28,13 +31,14 @@ int main(int argc, char *argv[])
 			case 'h':	// help
 				PrintUsage(1); return 0;
 			case 'v':	// version.
-				printf("GoogleVoice API by Steven Hickson.  %s (%s).  http://code.google.com/p/stevenhickson-code/\n\n", "1.0.1", BUILDTS);
+				printf("GoogleVoice API by Steven Hickson.  %s.  http://code.google.com/p/stevenhickson-code/\n\n", "2.0");
 				return 0;
 			case 'd':	// debug mode.
 				if(optarg) d=atoi(optarg); else d=1;
 				gv.debug=d;
 				break;
 			case 'u':	// username
+                config=false;
 				au=optarg;
 				break;
 			case 'p':	// password
@@ -74,6 +78,27 @@ int main(int argc, char *argv[])
 
 	if(gv.Init()) {cout << "GoogleVoice() failed to initialize.  Blaming curl.  Dying.\n"; return -1;}
     
+    //Let's fill in the config options if they weren't specified
+    if(!config) {
+	    FILE *fp;
+        char *passPath;
+        passPath = getenv("HOME");
+        if(passPath == NULL) {
+            printf("Could not get $HOME\n");
+            return -1;
+        }
+        string path = string(passPath);
+        path += "/.gtext";
+        fp = fopen(path.c_str(),"r");
+        if(!fp) {cout << "Couldn't open password file. Dying\n"; return -1;}
+        char buf1[100];
+        char buf2[100];
+        fscanf(fp,"%s\n%s\n",buf1,buf2);
+        fclose(fp);
+        au = string(buf1);
+        ap = string(buf2);
+    }
+
     if(rnr == "")
 	    r = gv.Login(au,ap);
     else

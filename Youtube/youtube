@@ -5,9 +5,9 @@ then
     echo "e.g : $0 http://www.youtube.com/watch?v=D1R-jKKp3NA"
 else
     if [ -z $DISPLAY ] ; then
-        run_command="omxplayer --audio_queue=10 --video_queue=40 -r -o hdmi"
+        run_command="omxplayer -r -o hdmi"
     else
-        run_command="xterm -fullscreen -bg black -fg black -e omxplayer --audio_queue=10 --video_queue=40 -r -o hdmi"
+        run_command="xterm -fullscreen -bg black -fg black -e omxplayer -r -o hdmi"
     fi
     var=$1
     http=`echo "$var" | grep http | wc -l`
