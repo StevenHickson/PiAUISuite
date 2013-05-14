@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
 	GoogleVoice gv;
 	int a,d,r;
-    bool check_sms = false, send_sms = false, delete_sms = false, return_rnr = false;
+    bool check_sms = false, send_sms = false, delete_sms = false, return_rnr = false, contact_info = false;
     string keyword="";
     string rnr="";
 	string an,am;
@@ -24,10 +24,13 @@ int main(int argc, char *argv[])
 						// eg: au="mygmailuser"; ap="mysecretpasswd";
     bool config = true;
 
-	while((a=getopt(argc,argv, "d::hvu:p:rcol:k:n:m:")) != -1)
+	while((a=getopt(argc,argv, "id::hvu:p:rcol:k:n:m:")) != -1)
 	{
 		switch(a)
 		{
+            case 'i':
+                contact_info = true;
+                break;
 			case 'h':	// help
 				PrintUsage(1); return 0;
 			case 'v':	// version.
@@ -35,6 +38,7 @@ int main(int argc, char *argv[])
 				return 0;
 			case 'd':	// debug mode.
 				if(optarg) d=atoi(optarg); else d=1;
+                printf("Debugging level %d enabled\n",d);
 				gv.debug=d;
 				break;
 			case 'u':	// username
@@ -72,15 +76,15 @@ int main(int argc, char *argv[])
 				if(gv.debug) PrintUsage(); return 0;
 		}
 	}
-	if(au.empty() || ap.empty() || (!check_sms && !send_sms)) {PrintUsage(1); return 1;}
+    if((!au.empty() && ap.empty()) || (!check_sms && !send_sms && !contact_info)) {PrintUsage(1); return 1;}
 
 	//printf("GoogleVoice API by mm_202.\n");
 
 	if(gv.Init()) {cout << "GoogleVoice() failed to initialize.  Blaming curl.  Dying.\n"; return -1;}
     
     //Let's fill in the config options if they weren't specified
-    if(!config) {
-	    FILE *fp;
+    if(config) {
+        FILE *fp;
         char *passPath;
         passPath = getenv("HOME");
         if(passPath == NULL) {
@@ -100,13 +104,15 @@ int main(int argc, char *argv[])
     }
 
     if(rnr == "")
-	    r = gv.Login(au,ap);
+	    r = gv.Login(au,ap,contact_info);
     else
         gv.Set_rnr(rnr);
 
 	if((gv.debug&1) || r) printf("gv.Login() returned %d.\n\n", r);
     
-    if(check_sms) {
+    if(contact_info) {
+        gv.GetContactInfo();  
+    } else if(check_sms) {
         string results;
         string number = "";
         if(!an.empty())

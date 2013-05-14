@@ -16,17 +16,19 @@ protected:
 public:
 	char errorbuf[CURL_ERROR_SIZE];
 	string curlbuf;
-	
+    string contact_buf;
+
 	int loggedin;
 	int debug;				// Temp flag used to mostly dump the contents of curlbuf.
 	GoogleVoice();
 	~GoogleVoice();
 
 	int Init(void);
-	int Login(void);
-	int Login(string login, string passwd);
+	int Login(bool get_contacts = false);
+	int Login(string login, string passwd, bool get_contacts = false);
 	//int Logout(void);
 	
+    int GetContactInfo();
 	int SendSMS(string number, string msg);
     int CheckSMS(string &results, string number, string keyword, bool delete_sms);
     int MarkAsRead(string msg_id);

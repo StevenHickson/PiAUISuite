@@ -52,6 +52,28 @@ int GoogleVoice::MarkAsRead(string msg_id)
     return 0;
 }
 
+int GoogleVoice::GetContactInfo() {
+	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}
+	if(Login()) return -1;
+
+    string curlbuf = contact_buf;
+    
+    regex rexp("'contacts'"); cmatch m;
+    if(regex_search(curlbuf.c_str(), m, rexp)) {
+        //printf("Found contacts\n");
+        regex rexp2("\"name\":\"([a-zA-Z0-9 -]+)\",\"photoUrl\":\"\",\"phoneNumber\":\"\\+(\\d+)\""); smatch n;
+        string::const_iterator  begin = curlbuf.begin(), end = curlbuf.end();
+        while(regex_search(begin, end, n, rexp2)) {
+            smatch::value_type r = n[1];
+            begin = r.second;
+            string name = n[1];
+            string number = n[2];
+            printf("%s==+%s\n",name.c_str(),number.c_str());
+        }
+    }
+    return 0;
+}
+
 int GoogleVoice::DeleteSMS(string msg_id)
 {
 	curl_easy_setopt(hcurl, CURLOPT_URL, "https://www.google.com/voice/inbox/deleteMessages/");
@@ -166,14 +188,14 @@ int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool d
 
 }
 
-int GoogleVoice::Login(string email, string passwd)
+int GoogleVoice::Login(string email, string passwd, bool get_contacts)
 {
 	if(email.length()<1 || email.length()<1) return -1;
 	this->email=email; this->passwd=passwd;
-	return Login();
+	return Login(get_contacts);
 }
 
-int GoogleVoice::Login(void)
+int GoogleVoice::Login(bool get_contacts)
 {
 	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}
 	if(loggedin) return 0;
@@ -204,6 +226,9 @@ int GoogleVoice::Login(void)
 	curl_easy_setopt(hcurl, CURLOPT_POSTFIELDS, post.c_str());	// TODO: check this and make sure it doesnt hold on to passed data ptr.
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() Error: " << errorbuf << endl; return -3;}
+
+    if(get_contacts)
+        contact_buf = curlbuf;
 
 	if(debug&2) cout << "\nLogin() curlbuf: [" << curlbuf << "]\n";
 

@@ -32,7 +32,11 @@ do
         #    `source /etc/profile`
         #fi
         db_path="$HOME/.media.db"
-        sudo updatedb --localpaths="$var" --output="$db_path"
+        test_out=`sudo updatedb --localpaths="$var" --output="$db_path"`
+        if [ -n "$test_out" ] ; then
+            echo "Found error, attempting to use older format"
+            sudo updatedb -U "$var" --output="$db_path"
+        fi
         echo "Done creating database, setting up cron update ..."
         if [ -e "/etc/cron.daily/updatelocaldb" ] ; then
             sudo rm -f "/etc/cron.daily/updatelocaldb"

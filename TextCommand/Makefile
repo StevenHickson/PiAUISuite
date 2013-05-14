@@ -7,7 +7,7 @@ gvapi: gvapi.cpp gvoice.o
 	g++ $(BLDDEF) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -lcurl -lboost_regex -o gvapi gvoice.o gvapi.cpp
 
 gvoice: gvoice.cpp gvoice.h
-	g++ $(BLDDER) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -c -lcurl -lboost_regex gvoice.cpp
+	g++ $(BLDDEF) -O3 -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard -c -lcurl -lboost_regex gvoice.cpp
 
 clean:
 	rm *.o gtextcommand 2>/dev/null
