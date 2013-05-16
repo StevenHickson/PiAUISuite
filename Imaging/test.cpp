@@ -43,12 +43,10 @@ int main( int argc, char** argv ) {
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, height);
    
     bool firstRun = true;
-    if(args == 2)
-        motion = frame.clone(); 
     while(1) {
         timeval beg, end;
         gettimeofday(&beg, NULL);
-        if(!firstRun)
+        if(!firstRun && args == 2)
             oldFrame = frame.clone();
         IplImage *img = cvQueryFrame( capture );
         if( !img ) break;
@@ -59,11 +57,13 @@ int main( int argc, char** argv ) {
         } else if(args == 2) {
             if(!firstRun) {
                 MotionDetection(oldFrame,frame,&motion);
-                cvShowImage( WINDOW_NAME, &motion);
-            } else
+                imshow( WINDOW_NAME, motion);
+            } else {
                 firstRun = false;
+                motion = frame.clone(); 
+            }
         } else
-            cvShowImage( WINDOW_NAME, &frame );
+            imshow( WINDOW_NAME, frame );
         gettimeofday(&end, NULL);
         double elapsed = (end.tv_sec - beg.tv_sec) + 
                           ((end.tv_usec - beg.tv_usec)/1000000.0);
@@ -92,7 +92,7 @@ void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *casc
         CvPoint pt2 = { r->x + r->width, r->y + r->height };
         cvRectangle(frame, pt1, pt2, CV_RGB(0,255,0), 3, 4, 0);
     }
-    cvShowImage( WINDOW_NAME, frame );
+    imshow( WINDOW_NAME, *frame );
 
 }
 
@@ -111,24 +111,22 @@ void MotionDetection(const Mat &past, const Mat &now, Mat *motion) {
       const unsigned char *pastData = reinterpret_cast<const unsigned char *>(past.data);
       const unsigned char *nowData = reinterpret_cast<const unsigned char *>(now.data);
       unsigned char *motionData = reinterpret_cast<unsigned char *>(motion->data);
-      for (int i=1; i<nl; i++) {
-            for (int j=0; j<nc; j+= past.channels()) {
+      for (int i = 0; i < nl; i++) {
+            for (int j = 0; j < nc; j++) {
             // process each pixel ---------------------
-                  int r_diff = abs(pastData[j] - nowData[j]);
-                  int g_diff = abs(pastData[j+1] - nowData[j+1]);
-                  int b_diff = abs(pastData[j+2] - nowData[j+2]);
+                  int b_diff = abs(pastData[past.step[0]*i + past.step[1] * j + 0] - nowData[now.step[0]*i + now.step[1] * j + 0]);
+                  int g_diff = abs(pastData[past.step[0]*i + past.step[1] * j + 1] - nowData[now.step[0]*i + now.step[1] * j + 1]);
+                  int r_diff = abs(pastData[past.step[0]*i + past.step[1] * j + 2] - nowData[now.step[0]*i + now.step[1] * j + 2]);
                   if(r_diff > THRESH || g_diff > THRESH || b_diff > THRESH) {
-                    motionData[j] = 255;
-                    motionData[j+1] = 255;
-                    motionData[j+2] = 255;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 0] = 255;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 1] = 255;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 2] = 255;
                   } else {
-                    motionData[j] = 0;
-                    motionData[j+1] = 0;
-                    motionData[j+2] = 0;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 0] = 0;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 1] = 0;
+                    motionData[motion->step[0]*i + motion->step[1] * j + 2] = 0;
                   }
             }
-            pastData+= past.channels();
-            nowData+= past.channels();
-            motionData+= past.channels();
       }
+      printf("Finished frame\n");
 }
