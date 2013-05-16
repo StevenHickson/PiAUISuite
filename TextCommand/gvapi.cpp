@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
             return -1;
         }
         string path = string(passPath);
-        path += "/.gtext";
+        path += "/.gv";
         fp = fopen(path.c_str(),"r");
         if(!fp) {cout << "Couldn't open password file. Dying\n"; return -1;}
         char buf1[100];

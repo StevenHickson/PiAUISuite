@@ -57,8 +57,29 @@ else
     echo "Skipping downloader install"
 fi
 
+#Install gvapi
+echo "Install gvapi (googlevoice api)? y/n"
+read option
+if [ $option == "y" ] || [ $option == "Y" ] ; then
+echo "Installing Text Command Script"
+echo "Enter google voice username: "
+read user
+echo "Enter google voice password: "
+read passwd
+#print commands to $HOME/.gtext
+if [ -e "$HOME/.gv" ] ; then
+    sudo rm -f "$HOME/.gv"
+fi
+echo "$user"   | sudo tee -a "$HOME/.gv" >/dev/null
+echo "$passwd"   | sudo tee -a "$HOME/.gv" >/dev/null
+sudo cp ../TextCommand/gvapi /usr/bin/gvapi
+echo "Done installing gvapi!"
+else
+    echo "Skipping gvapi install"
+fi
+
 #Install gtextcommand script
-echo "Install gtextcommand? y/n"
+echo "Install gtextcommand (google voice text command system)? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
 echo "Installing Text Command Script"
@@ -123,6 +144,13 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp ../VoiceCommand/voicecommand.8.gz /usr/share/man/man8/
     if [ -z "$HOME/.commands.conf" ] ; then
         cp ../VoiceCommand/commands.conf "$HOME/.commands.conf"
+    fi
+    echo "Would you like voicecommand to try to set itself up? y/n"
+    read option
+    if [ $option == "y" ] || [ $option == "Y" ] ; then
+        voicecommand -s
+    else
+        echo "You can do this manually at any time by running voicecommand -s"
     fi
 else
     echo "Skipping voicecommand install"

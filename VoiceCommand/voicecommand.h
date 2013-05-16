@@ -32,7 +32,10 @@ public:
     bool ignoreOthers;
     bool filler;
     bool quiet;
+    bool differentHW;
     float thresh;
+    int duration;
+    string recordHW;
     string keyword;
     string config_file;
     string response;
@@ -50,11 +53,14 @@ public:
     void CheckConfig();
     void CheckCmdLineParam(int argc, char* argv[]);
     void DisplayUsage();
+    void Setup();
 
     int Search(const char* search);
     int Init(void);
 
     static int CurlWriter(char *data, size_t size, size_t nmemb, string *buffer);
 };
+
+#define DURATION_DEFAULT 3
 
 #endif

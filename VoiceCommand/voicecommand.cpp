@@ -7,7 +7,7 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "bcveiqt:k:r:f:h?";
+static const char *optString = "sbcveiqt:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -21,10 +21,36 @@ inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
         command += "\" 2>/dev/null 1>/dev/null";
         system(command.c_str());
     }
-    cmd = popen("speech-recog.sh","r");
+    string command = "speech-recog.sh";
+    if(vc.differentHW) {
+        command += " -D ";
+        command += vc.recordHW;
+    }
+    if(vc.duration != DURATION_DEFAULT) {
+        stringstream tmp;
+        tmp << vc.duration;
+        command += " -d ";
+        command += tmp.str();
+    }
+    cmd = popen(command.c_str(),"r");
     fscanf(cmd,"\"%[^\"\n]\"\n",message);
     vc.ProcessMessage(message);
     fclose(cmd);
+}
+
+inline float GetVolume(string recordHW, bool nullout) {
+    FILE *cmd;
+    float vol = 0.0f;
+    string run = "arecord -D ";
+    run += recordHW;
+    run += " -f cd -t wav -d 2 -r 16000 /dev/shm/noise.wav";
+    if(nullout)
+        run += " 1>/dev/null 2>/dev/null";
+    system(run.c_str());
+    cmd = popen("sox /dev/shm/noise.wav -n stats -s 16 2>&1 | awk '/^Max\\ level/ {print $3}'","r");
+    fscanf(cmd,"%f",&vol);
+    fclose(cmd);
+    return vol;
 }
 
 int main(int argc, char* argv[]) {
@@ -34,6 +60,7 @@ int main(int argc, char* argv[]) {
     
     FILE *cmd = NULL;
     char message[200];
+    message[0] = '\0';
 
     vc.GetConfig();
     //vc.CheckConfig();
@@ -50,11 +77,9 @@ int main(int argc, char* argv[]) {
         float volume = 0.0f;
         changemode(1);
         while(vc.continuous) {
-            system("arecord -D plughw:1,0 -f cd -t wav -d 2 -r 16000 /dev/shm/noise.wav 1>/dev/null 2>/dev/null");
-            cmd = popen("sox /dev/shm/noise.wav -n stats -s 16 2>&1 | awk '/^Max\\ level/ {print $3}'","r");
-            fscanf(cmd,"%f",&volume);
-            fclose(cmd);
+            volume = GetVolume(vc.recordHW, true);
             if(volume > vc.thresh) {
+                //printf("Found volume %f above thresh %f\n",volume,vc.thresh);
                 if(vc.verify) {
                     system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>/dev/null 2>/dev/null");
                     cmd = popen("wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=en | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'","r");
@@ -62,6 +87,8 @@ int main(int argc, char* argv[]) {
                         printf("ERROR\n");
                     fscanf(cmd,"\"%[^\"\n]\"\n",message);
                     fclose(cmd);
+                    //system("rm -fr /dev/shm/noise.*");
+                    //printf("message: %s, keyword: %s\n", message, vc.keyword.c_str());
                     if(strcmp(message,vc.keyword.c_str()) == 0) {
                         message[0] = '\0'; //this will clear the first bit
                         ProcessVoice(cmd,vc,message);
@@ -89,7 +116,18 @@ int main(int argc, char* argv[]) {
         }
     } else {
         //system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
-        cmd = popen("speech-recog.sh","r");
+        string command = "speech-recog.sh";
+        if(vc.differentHW) {
+            command += " -D ";
+            command += vc.recordHW;
+        }
+        if(vc.duration != DURATION_DEFAULT) {
+            stringstream tmp;
+            tmp << vc.duration;
+            command += " -d ";
+            command += tmp.str();
+        }
+        cmd = popen(command.c_str(),"r");
         fscanf(cmd,"\"%[^\"\n]\"\n",message);
         vc.ProcessMessage(message);
         fclose(cmd);
@@ -110,6 +148,12 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'c':
                 continuous = true;
                 break;
+            case 'd':
+                duration = atoi(optarg);
+                break;
+            case 'D':
+                recordHW = string(optarg);
+                differentHW = true;
             case 'v':
                 verify = true;
                 break;
@@ -122,6 +166,9 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'q':
                 quiet = true;
                 break;
+            case 's':
+                Setup();
+                exit(0);
             case 't':
                 thresh = atof(optarg);
                 break;
@@ -164,6 +211,10 @@ VoiceCommand::VoiceCommand() {
     continuous = false;
     verify = false;
     edit = false;
+    ignoreOthers = false;
+    differentHW = false;
+    recordHW = "plughw:1,0";
+    duration = DURATION_DEFAULT;
     char *passPath = getenv("HOME");
     if(passPath == NULL) {
         printf("Could not get $HOME\n");
@@ -227,8 +278,10 @@ inline void VoiceCommand::ProcessMessage(char* message) {
         }
         ++i;
     }
-    if(ignoreOthers)
+    if(ignoreOthers) {
+        printf("Received improper command: %s\n",message);
         return;
+    }
     string checkit = string(message);
     if(message != NULL && !checkit.empty()) {
         printf("Attempting to answer: %s\n",message);
@@ -272,10 +325,16 @@ void VoiceCommand::GetConfig() {
             tmp = line.substr(0,11);
             if(tmp.compare("!response==") == 0)
                 response = line.substr(11).c_str();
+            if(tmp.compare("!hardware==") == 0) {
+                recordHW = line.substr(11).c_str();
+                differentHW = true;
+            }
+            if(tmp.compare("!duration==") == 0)
+                duration = atoi(line.substr(11).c_str());
             tmp = line.substr(0,13);
             if(tmp.compare("!continuous==") == 0)
                 continuous = bool(atoi(line.substr(13).c_str()));
-        } else if(line[0] != '#' && loc != string::npos) {
+        } else if(loc < 500 && loc != string::npos && line[0] != '#') {
             //This isn't a comment and is formatted properly
             string v = line.substr(0,loc);
             string c = line.substr(loc + 2);
@@ -423,4 +482,203 @@ int kbhit (void)
   select(STDIN_FILENO+1, &rdfs, NULL, NULL, &tv);
   return FD_ISSET(STDIN_FILENO, &rdfs);
  
+}
+
+void VoiceCommand::Setup() {
+    //Function in order to detect your default options.
+    //It will then set these automatically in the config file.
+    char buffer[100];
+    string write = "";
+    printf("Do you want to permanently set the continuous flag so that it always runs continuously? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        continuous = true;
+        write += "!continuous==1\n";
+    }
+    printf("Do you want to permanently set the verify flag so that it always verifies the keyword? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        verify = true;
+        write += "!verify==1\n";
+    }
+    printf("Do you want to permanently set the ignore flag so that it never looks for answers outside the config file? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        ignoreOthers = true;
+        write += "!ignore==1\n";
+    }
+    printf("Do you want to permanently set the quiet flag so that it never uses audio out to speak? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        quiet = true;
+        write += "!quiet==1\n";
+    }
+    printf("Do you want to permanently change the default duration of the speech recognition (3 seconds)? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        printf("Type the number of seconds you want it to run: ex 3\n");
+        scanf("%d", &duration);
+        write += "!duration==";
+        stringstream tmp;
+        tmp << duration;
+        write += tmp.str();
+        write += "\n";
+    }
+
+    //Now we will check some more options and check the TTS and speech recognition
+    printf("Do you want to set up and check the text to speech options? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        printf("First I'm going to say something and see if you hear it\n");
+        system("tts \"FILL This program was created by Steven Hickson\"");
+        printf("Did you hear anything? (y/n)\n");
+        scanf("%s",buffer);
+        if(buffer[0] == 'n') {
+            printf("Something went wrong and you should run the install script and install the dependecies as well\n");
+            printf("You might also want to change some alsa options using alsamixer and alsa force-reload\n");
+            exit(-1);
+        }
+        printf("\nIf you heard the word FILL (or FILLER or FILLER FILL) at the beginning of the sentence, the filler flag should be set to 0\n");
+        printf("Do you want me to permanently set the filler flag to 0? (y/n)\n");
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            filler = false;
+            write += "!filler==0\n";
+        }
+        printf("\nThe default response of the system after it finds the keyword is \"Yes Sir?\"\n");
+        printf("Do you want to change the response? (y/n)\n");
+        bool change = false;
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            change = true;
+            while(change) {
+                printf("Type the phrase you want as the response:\n");
+                scanf("%s",buffer);
+                string cmd = "";
+                if(filler)
+                    cmd += "tts \"FILL ";
+                else
+                    cmd += "tts-nofill \"";
+                cmd += string(buffer);
+                cmd += "\"";
+                system(cmd.c_str());
+                response = string(buffer);
+                printf("Did that sound correct? (y/n)\n");
+                scanf("%s",buffer);
+                if(buffer[0] == 'y')
+                    change = false;
+            }
+            write += "!response==";
+            write += response;
+            write += "\n";
+        }
+    }
+    
+    //Now we will check some more options and check the TTS and speech recognition
+    printf("Do you want to set up and check the speech recognition options? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        printf("First I'm going to make sure you have the correct hardware device\n");
+        FILE *cmd;
+        int card = -1,device = -1;
+        cmd = popen("arecord -l | awk '/^card [0-9]/ {print $2}'","r");
+        fscanf(cmd, "%d:",&card);
+        cmd = popen("arecord -l | awk '/device [0-9]/ {print $2}'","r");
+        fscanf(cmd, "%d:",&device);
+        if(card == -1 || device == -1) {
+            printf("I couldn't find a hardware device. You don't have a valid microphone\n");
+            exit(-1);
+        } else if(card != 1 || device != 0) {
+            printf("I detected that you have a different audio card then I located, would you like me to fix that in the config file? (y/n)\n");
+            scanf("%s",buffer);
+            if(buffer[0] == 'y') {
+                stringstream tmp;
+                tmp << "plughw:";
+                tmp << card;
+                tmp << ",";
+                tmp << device;
+                recordHW = tmp.str();
+                differentHW = true;
+                write += "!hardware==";
+                write += recordHW;
+                write += "\n";
+            }
+        } else 
+            printf("Everything seems right with the hardware config\n");
+        printf("\nWould you like me to try to get the proper audio threshold? (y/n)\n");
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            float low, high;
+            printf("I'm going to record you once while you are silent and then once while you say the command in order to determine the threshold\n");
+            printf("Getting ready for silent recording, just don't say anything while this is happening, press any key when ready\n");
+            getchar();
+            getchar(); //Needed it twice here for whatever reason
+            low = GetVolume(recordHW, false);
+            printf("Getting ready for command recording, try saying the command while this is happening, press any key when ready\n");
+            getchar();
+            high = GetVolume(recordHW, false);
+            float tmp = (high - low) * 0.75f + low;
+            if(tmp != thresh) {
+                printf("I detected that your default thresh: %f is different than the thresh I detected that you should use: %f\n",thresh,tmp);
+                printf("Should I set that in the config file? (y/n)\n");
+                scanf("%s",buffer);
+                if(buffer[0] == 'y') {
+                    thresh = tmp;
+                    stringstream convert;
+                    convert << thresh;
+                    write += "!thresh==";
+                    write += convert.str();
+                    write += "\n";
+                }
+            }
+        }
+        printf("\nThe default keyword of the system is \"pi\"\n");
+        printf("Do you want to change the keyword? (y/n)\n");
+        bool change = false;
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            change = true;
+            FILE *cmd;
+            while(change) {
+                printf("Type the phrase you want as the keyword:\n");
+                scanf("%s",buffer);
+                keyword = string(buffer);
+                char message[200];
+                printf("Now say that keyword\n");
+                string command = "speech-recog.sh";
+                if(differentHW) {
+                    command += " -D ";
+                    command += recordHW;
+                }
+                if(duration != DURATION_DEFAULT) {
+                    stringstream tmp;
+                    tmp << duration;
+                    command += " -d ";
+                    command += tmp.str();
+                }
+                cmd = popen(command.c_str(),"r");
+                fscanf(cmd,"\"%[^\"\n]\"\n",message); 
+                if(strcmp(message,keyword.c_str()) == 0)
+                    printf("I got %s, which was a perfect match!\n",message);
+                else
+                    printf("I got %s, which was different than what you typed: %s\n",message,keyword.c_str());
+                printf("Did that seem correct? (y/n)\n");
+                scanf("%s",buffer);
+                if(buffer[0] == 'y')
+                    change = false;
+            }
+            write += "!keyword==";
+            write += keyword;
+            write += "\n";
+        }
+    }
+
+    //Now we will write everything to the config file
+    string tmp = "echo \"";
+    tmp += write;
+    tmp += "\" >> ";
+    tmp += config_file;
+    //I am doing it this way because I'm lazy
+    system(tmp.c_str());
+    printf("Done setting everything up!\n");
 }

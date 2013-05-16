@@ -40,6 +40,12 @@ if [ -e "/usr/bin/gtextcommand" ] ; then
     chmod +x /usr/bin/gtextcommand
 fi
 
+if [ -e "/usr/bin/gvapi" ] ; then
+    echo "Updating gvapi ..."
+    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gvapi
+    chmod +x /usr/bin/gvapi
+fi
+
 if [ -e "/usr/bin/youtube" ] ; then
     echo "Updating youtube ..."
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube
