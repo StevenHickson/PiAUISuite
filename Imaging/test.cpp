@@ -10,17 +10,17 @@
 using namespace cv;
 using namespace std;
 
-void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade);
-void MotionDetection(const Mat &past, const Mat &now, Mat *motion);
+void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade, bool show);
+float MotionDetection(const Mat &past, const Mat &now, Mat *motion);
 
 #define WINDOW_NAME "Webcam"
 #define THRESH 20
 
 int main( int argc, char** argv ) {
-    cvNamedWindow( WINDOW_NAME, CV_WINDOW_NORMAL);
     
     int width = 640;
     int height = 480;
+    bool window = true;
 
     CvCapture* capture = cvCreateCameraCapture(0) ;
 
@@ -29,7 +29,12 @@ int main( int argc, char** argv ) {
     CvHaarClassifierCascade* face_cascade = (CvHaarClassifierCascade *)cvLoad("face.xml",0,0,0);
     
     int args = 0;
-    if(argc > 3) {
+    if(argc > 4) {
+        args = atoi(argv[1]);
+        window = bool(atoi(argv[2]));
+        width = atoi(argv[3]);
+        height = atoi(argv[4]);
+    } else if(argc > 3) {
         args = atoi(argv[1]);
         width = atoi(argv[2]);
         height = atoi(argv[3]);
@@ -39,6 +44,10 @@ int main( int argc, char** argv ) {
         else if(atoi(argv[1]) == 2)
             args = 2;
     }
+    
+    if(window == false)
+        cvNamedWindow( WINDOW_NAME, CV_WINDOW_NORMAL);
+    
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, width);
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, height);
    
@@ -53,16 +62,19 @@ int main( int argc, char** argv ) {
         frame = img;
         
         if(args == 1) {
-            FindFaces(&frame,pStorage,face_cascade);
+            FindFaces(&frame,pStorage,face_cascade,window);
         } else if(args == 2) {
             if(!firstRun) {
-                MotionDetection(oldFrame,frame,&motion);
-                imshow( WINDOW_NAME, motion);
+                float total = MotionDetection(oldFrame,frame,&motion);
+                printf("Tot: %f,  ",total);
+                //Here you would check total instead of printing it, and if it is above a certain value, you would save the image
+                if(window)
+                    imshow( WINDOW_NAME, motion);
             } else {
                 firstRun = false;
                 motion = frame.clone(); 
             }
-        } else
+        } else if(window)
             imshow( WINDOW_NAME, frame );
         gettimeofday(&end, NULL);
         double elapsed = (end.tv_sec - beg.tv_sec) + 
@@ -76,7 +88,7 @@ int main( int argc, char** argv ) {
     cvDestroyWindow( "Webcam" );
 }
 
-void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade) {
+void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade, bool show) {
     //find faces using haar recognition
     CvSeq * pFaceRectSeq = cvHaarDetectObjects
         (frame, cascade, pStorage,
@@ -92,7 +104,8 @@ void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *casc
         CvPoint pt2 = { r->x + r->width, r->y + r->height };
         cvRectangle(frame, pt1, pt2, CV_RGB(0,255,0), 3, 4, 0);
     }
-    imshow( WINDOW_NAME, *frame );
+    if(show)
+        imshow( WINDOW_NAME, *frame );
 
 }
 
@@ -103,10 +116,12 @@ inline int abs(int val) {
         return val;
 }
 
-void MotionDetection(const Mat &past, const Mat &now, Mat *motion) {
+//returns total change
+float MotionDetection(const Mat &past, const Mat &now, Mat *motion) {
       int nl = past.rows; // number of lines
       // total number of element per line
       int nc = past.cols; 
+      int total = 0;
 
       const unsigned char *pastData = reinterpret_cast<const unsigned char *>(past.data);
       const unsigned char *nowData = reinterpret_cast<const unsigned char *>(now.data);
@@ -121,6 +136,7 @@ void MotionDetection(const Mat &past, const Mat &now, Mat *motion) {
                     motionData[motion->step[0]*i + motion->step[1] * j + 0] = 255;
                     motionData[motion->step[0]*i + motion->step[1] * j + 1] = 255;
                     motionData[motion->step[0]*i + motion->step[1] * j + 2] = 255;
+                    total++;
                   } else {
                     motionData[motion->step[0]*i + motion->step[1] * j + 0] = 0;
                     motionData[motion->step[0]*i + motion->step[1] * j + 1] = 0;
@@ -128,5 +144,5 @@ void MotionDetection(const Mat &past, const Mat &now, Mat *motion) {
                   }
             }
       }
-      printf("Finished frame\n");
+      return (float(total) / float(nl * nc));
 }
