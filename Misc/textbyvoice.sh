@@ -9,12 +9,12 @@ function sendtext() {
     while read -r x
     do
         if [ "$count" == 1 ] ; then
-            tts "What would you like to text to $x"
+            tts "FILL What would you like to text to $x"
         elif [ "$count" == 3 ] ; then
             while [ $okay == 0 ]
             do
                 local message=`speech-recog.sh -d 10`
-                tts "I got $message. Is this correct?"
+                tts "FILL I got $message. Is this correct?"
                 yes=`speech-recog.sh`
                 if [[ "$yes" == *"yes"* ]] ; then
                     gvapi -n "$x" -m "$message"
@@ -34,7 +34,7 @@ if [ $# -gt 0 ] ; then
         exit
     fi
 
-    results=`cat ~/.contacts | grep "$@"`
+    results=`cat ~/.contacts | grep -i "$@"`
     num=`echo "$results" | wc -l`
     if [ $num -gt 1 ] ; then
         echo "not done yet"
