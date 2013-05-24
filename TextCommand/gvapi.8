@@ -1,0 +1,78 @@
+.\" Manpage for gvapi.
+.\" Contact me@stevenhickson to add input or correct errors or typos.
+.TH man 8 "23 May 2013" "2.0" "gvapi man page"
+.SH NAME
+gvapi \- Use of Google voice API in order to send and receive SMS
+.SH SYNOPSIS
+.I "gvapi [OPTIONS]..."
+.SH DESCRIPTION
+gvapi was compiled for use with home automation on the Raspberry Pi but will work on any linux system with an internet connection. It uses curl and boost regex in order to login and stores the cookie in /dev/shm. It only logs in once every 24 hours to save time. It supports a multitude of different options and parameters.
+For help/comments/questions, feel free to e-mail me at me@stevenhickson.com. I answer sporadically but do eventually respond.
+.PP
+.SH OPTIONS
+.TP
+.I "-?"
+Same as -h
+
+.TP
+.I "-c"
+Checks your incoming text messages to see if you have anything unread. It will mark it whatever it outputs as read unless you also use the -r flag. If you include a number with the -n flag, you can specify it to only check messages received from that number. You can also use the -k flag to specify that the message must start with a certain keyword.
+
+.TP
+.I "-d"
+Sets debug mode on. You can also specify debug mode from 1 - 3, where 3 is the most verbose.
+.br
+.I "    Ex: gvapi -c -d2"
+
+.TP
+.I "-h"
+Asks for some quick general use help for gvapi.
+
+.TP
+.I "-i"
+Outputs the contacts of your google voice account in the form name==number
+
+.TP
+.I "-k KEYWORD"
+Sets a keyword that has to be in the beginning of the text message for it to be returned. This is useful as a password for parsing only certain messages.
+
+.TP
+.I "-m MESSAGE"
+Sends the message you specify. This should be in quotes if it contains special characters or a space. The number also has to be specified otherwise it won't have a message to send
+.br
+.I "    Ex: gvapi -n +15551234 -m Hello"
+
+.TP
+.I "-n NUMBER"
+Can be used with the -c flag to check messages from a certain number or the -m flag to send a message. Can be in a format without the country code, with just the country code, or with a plus sign and the country code. If the formost, it interprets it as a US number.
+.br
+.I "    Ex: gvapi -n 5551234 -c"
+
+.TP
+.I "-p PASSWORD"
+Can be used with the -u flag to log in manually. If not specified, the program uses the default username and password specified in ~/.gv
+
+.TP
+.I "-r"
+Receives and deletes SMS messges. Can be used with the -c flag or without. It is the same as the -c flag but instead of just marking the messages as read. It deletes them.
+
+.TP
+.I "-u USERNAME"
+Can be used with the -p flag to log in manually. See the -p flag for more details. Cannot be used without the -p flag.
+
+.TP
+.I "-v"
+Outputs version and creater information
+
+.SH AUTHOR
+.I "Steven Hickson (me@stevenhickson.com)"
+.SH BUGS
+No known bugs. To report bugs, send a clear description to me@stevenhickson.com
+Since this program is fairly crude, user typos could cause crashes/failed responses. Please read the man page thoroughly before submitting a bug.
+.SH COPYRIGHT
+Copyright ©  2013 Steven Hickson. License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it as long as you give credit to the author and include this license.  There is NO WARRANTY, to the extent permitted by law.
+.SH HISTORY
+This is the second major version of this program
+.SH SEE ALSO
+http://stevenhickson.blogspot.com/

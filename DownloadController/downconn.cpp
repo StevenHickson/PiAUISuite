@@ -30,7 +30,8 @@ int Downloader::Search(string download, string *link, bool verify) {
         return -1;
     }
     
-    string torr = "https://thepiratebay.sx/search/";
+    //Going back to using https again
+    string torr = "http://thepiratebay.sx/search/";
     torr += download;
     torr += "/0/7/0";
     curl_easy_setopt(hcurl, CURLOPT_URL, torr.c_str());

@@ -54,7 +54,8 @@ int GoogleVoice::MarkAsRead(string msg_id)
 
 int GoogleVoice::GetContactInfo() {
 	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}
-	if(Login()) return -1;
+	loggedin = false; //we need to do this because the contact info is in the login page and if they have old cookies. This will never happen
+    if(Login()) return -1;
 
     string curlbuf = contact_buf;
     
@@ -145,6 +146,19 @@ int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool d
             }
             //printf("First check passed!\n");
             //reg_check = number;
+            string name = "";
+            if(number == "") {
+                reg_check ="class=\"gc-message-sms-from\">(.+?)</span>";
+                regex rexp2(reg_check); cmatch n;
+                string::const_iterator  begin = curlbuf.begin(), end = curlbuf.end();
+                smatch  p;
+                while(regex_search(begin, end, p, rexp2)) {
+                    smatch::value_type  r = p[1];
+                    begin = r.second;
+                    string t2 = p[1];
+                    name = t2;
+                }
+            }
             reg_check ="class=\"gc-message-sms-text\">";
             if(keyword != "") {
                 reg_check+=keyword;
@@ -163,6 +177,8 @@ int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool d
                 //results += "\n";
                 results = t2;
             }
+            if(name != "")
+                results = name + results;
             if(results != "") {
                 //printf("Second check passed!\n");
                 MarkAsRead(msg_id);
@@ -188,14 +204,14 @@ int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool d
 
 }
 
-int GoogleVoice::Login(string email, string passwd, bool get_contacts)
+int GoogleVoice::Login(string email, string passwd)
 {
 	if(email.length()<1 || email.length()<1) return -1;
 	this->email=email; this->passwd=passwd;
-	return Login(get_contacts);
+	return Login();
 }
 
-int GoogleVoice::Login(bool get_contacts)
+int GoogleVoice::Login()
 {
 	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}
 	if(loggedin) return 0;
@@ -227,8 +243,8 @@ int GoogleVoice::Login(bool get_contacts)
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() Error: " << errorbuf << endl; return -3;}
 
-    if(get_contacts)
-        contact_buf = curlbuf;
+    //specifically for contacts    
+    contact_buf = curlbuf;
 
 	if(debug&2) cout << "\nLogin() curlbuf: [" << curlbuf << "]\n";
 
@@ -244,7 +260,36 @@ int GoogleVoice::Login(bool get_contacts)
 		loggedin=0;
 		return -2;
 	}
+    FILE *fp;
+    fp = fopen(DTFILE,"w");
+    if(fp == NULL) {
+        printf("ERROR writing time for cookies\n");
+        exit(-1);
+    }
+    time_t now;
+    time(&now);
+    fprintf(fp,"%s\n%Lu",rnr_se.c_str(),(unsigned long long int)now);
+    fclose(fp);
 	return 0;
+}
+
+bool timeisup(FILE* fp, string &rnr) {
+    if(fp == NULL)
+        return true;
+    //lazy method
+    unsigned long long int orig_time;
+    char buff[200];
+    fscanf(fp,"%s\n%Lu",buff,&orig_time);
+    fclose(fp);
+    rnr = string(buff);
+    time_t now, orig;
+    orig = (time_t)orig_time;
+    time(&now);
+    double seconds = difftime(now,orig);
+    if(seconds >= 86400)
+        return true;
+    return false;
+    //should maybe use a portable method
 }
 
 int GoogleVoice::Init(void)
@@ -260,7 +305,16 @@ int GoogleVoice::Init(void)
 	curl_easy_setopt(hcurl, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(hcurl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.8) Gecko/20100804 Gentoo Firefox/3.6.8");
 
-	curl_easy_setopt(hcurl, CURLOPT_COOKIEJAR, "/dev/shm/cookie.txt");
+    //check to see what time we last wrote the cookiefile
+    FILE *fp;
+    fp = fopen(DTFILE,"r");
+    if(timeisup(fp,rnr_se)) {
+	    curl_easy_setopt(hcurl, CURLOPT_COOKIEJAR, "/dev/shm/cookie.txt");
+    } else {
+        //Need to test 24 cookie use here with CURLOPT_COOKIEFILE that way we don't have to keep logging in all the time 
+	    curl_easy_setopt(hcurl, CURLOPT_COOKIEFILE, "/dev/shm/cookie.txt");
+        loggedin = true;
+    }
 	return 0;
 }
 

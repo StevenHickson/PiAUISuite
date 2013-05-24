@@ -7,7 +7,7 @@ void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "sbcveiqt:k:r:f:h?";
+static const char *optString = "l:d:D:sbcveiqt:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -26,24 +26,22 @@ inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
         command += " -D ";
         command += vc.recordHW;
     }
-    if(vc.duration != DURATION_DEFAULT) {
-        stringstream tmp;
-        tmp << vc.duration;
-        command += " -d ";
-        command += tmp.str();
-    }
+    command += " -d ";
+    command += vc.duration;
     cmd = popen(command.c_str(),"r");
     fscanf(cmd,"\"%[^\"\n]\"\n",message);
     vc.ProcessMessage(message);
     fclose(cmd);
 }
 
-inline float GetVolume(string recordHW, bool nullout) {
+inline float GetVolume(string recordHW, string com_duration, bool nullout) {
     FILE *cmd;
     float vol = 0.0f;
     string run = "arecord -D ";
     run += recordHW;
-    run += " -f cd -t wav -d 2 -r 16000 /dev/shm/noise.wav";
+    run += " -f cd -t wav -d ";
+    run += com_duration;
+    run += " -r 16000 /dev/shm/noise.wav";
     if(nullout)
         run += " 1>/dev/null 2>/dev/null";
     system(run.c_str());
@@ -74,10 +72,11 @@ int main(int argc, char* argv[]) {
         printf("running in continuous mode\n");
         if(vc.verify)
             printf("verifying command as well\n");
+        printf("keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
         while(vc.continuous) {
-            volume = GetVolume(vc.recordHW, true);
+            volume = GetVolume(vc.recordHW, vc.command_duration, true);
             if(volume > vc.thresh) {
                 //printf("Found volume %f above thresh %f\n",volume,vc.thresh);
                 if(vc.verify) {
@@ -121,12 +120,8 @@ int main(int argc, char* argv[]) {
             command += " -D ";
             command += vc.recordHW;
         }
-        if(vc.duration != DURATION_DEFAULT) {
-            stringstream tmp;
-            tmp << vc.duration;
-            command += " -d ";
-            command += tmp.str();
-        }
+        command += " -d ";
+        command += vc.duration;
         cmd = popen(command.c_str(),"r");
         fscanf(cmd,"\"%[^\"\n]\"\n",message);
         vc.ProcessMessage(message);
@@ -149,7 +144,7 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 continuous = true;
                 break;
             case 'd':
-                duration = atoi(optarg);
+                duration = string(optarg);
                 break;
             case 'D':
                 recordHW = string(optarg);
@@ -165,6 +160,9 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 break;
             case 'q':
                 quiet = true;
+                break;
+            case 'l':
+                command_duration = string(optarg);
                 break;
             case 's':
                 Setup();
@@ -215,6 +213,7 @@ VoiceCommand::VoiceCommand() {
     differentHW = false;
     recordHW = "plughw:1,0";
     duration = DURATION_DEFAULT;
+    command_duration = COM_DURATION_DEFAULT;
     char *passPath = getenv("HOME");
     if(passPath == NULL) {
         printf("Could not get $HOME\n");
@@ -322,15 +321,17 @@ void VoiceCommand::GetConfig() {
             tmp = line.substr(0,10);
             if(tmp.compare("!keyword==") == 0)
                 keyword = line.substr(10);
+            if(tmp.compare("!com_dur==") == 0)
+                command_duration = line.substr(10);
             tmp = line.substr(0,11);
             if(tmp.compare("!response==") == 0)
-                response = line.substr(11).c_str();
+                response = line.substr(11);
             if(tmp.compare("!hardware==") == 0) {
-                recordHW = line.substr(11).c_str();
+                recordHW = line.substr(11);
                 differentHW = true;
             }
             if(tmp.compare("!duration==") == 0)
-                duration = atoi(line.substr(11).c_str());
+                duration = line.substr(11);
             tmp = line.substr(0,13);
             if(tmp.compare("!continuous==") == 0)
                 continuous = bool(atoi(line.substr(13).c_str()));
@@ -517,11 +518,26 @@ void VoiceCommand::Setup() {
     scanf("%s",buffer);
     if(buffer[0] == 'y') {
         printf("Type the number of seconds you want it to run: ex 3\n");
-        scanf("%d", &duration);
+        int num;
+        scanf("%d", &num);
         write += "!duration==";
         stringstream tmp;
-        tmp << duration;
-        write += tmp.str();
+        tmp << num;
+        duration = tmp.str();
+        write += duration;
+        write += "\n";
+    }
+    printf("Do you want to permanently change the default command duration of the speech recognition (2 seconds)? (y/n)\n");
+    scanf("%s",buffer);
+    if(buffer[0] == 'y') {
+        printf("Type the number of seconds you want it to run: ex 2\n");
+        int num;
+        scanf("%d", &num);
+        write += "!com_dur==";
+        stringstream tmp;
+        tmp << num;
+        command_duration = tmp.str();
+        write += command_duration;
         write += "\n";
     }
 
@@ -613,10 +629,10 @@ void VoiceCommand::Setup() {
             printf("Getting ready for silent recording, just don't say anything while this is happening, press any key when ready\n");
             getchar();
             getchar(); //Needed it twice here for whatever reason
-            low = GetVolume(recordHW, false);
+            low = GetVolume(recordHW, command_duration, false);
             printf("Getting ready for command recording, try saying the command while this is happening, press any key when ready\n");
             getchar();
-            high = GetVolume(recordHW, false);
+            high = GetVolume(recordHW, command_duration, false);
             float tmp = (high - low) * 0.75f + low;
             if(tmp != thresh) {
                 printf("I detected that your default thresh: %f is different than the thresh I detected that you should use: %f\n",thresh,tmp);
@@ -650,12 +666,8 @@ void VoiceCommand::Setup() {
                     command += " -D ";
                     command += recordHW;
                 }
-                if(duration != DURATION_DEFAULT) {
-                    stringstream tmp;
-                    tmp << duration;
-                    command += " -d ";
-                    command += tmp.str();
-                }
+                command += " -d ";
+                command += duration;
                 cmd = popen(command.c_str(),"r");
                 fscanf(cmd,"\"%[^\"\n]\"\n",message); 
                 if(strcmp(message,keyword.c_str()) == 0)

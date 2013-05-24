@@ -73,6 +73,7 @@ fi
 echo "$user"   | sudo tee -a "$HOME/.gv" >/dev/null
 echo "$passwd"   | sudo tee -a "$HOME/.gv" >/dev/null
 sudo cp ../TextCommand/gvapi /usr/bin/gvapi
+sudo cp ../TextCommand/gvapi.8.gz /usr/share/man/man8/
 echo "Done installing gvapi!"
 else
     echo "Skipping gvapi install"

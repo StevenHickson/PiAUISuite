@@ -44,6 +44,7 @@ if [ -e "/usr/bin/gvapi" ] ; then
     echo "Updating gvapi ..."
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gvapi
     chmod +x /usr/bin/gvapi
+    wget -N -P /usr/share/man/man8/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gvapi.8.gz
 fi
 
 if [ -e "/usr/bin/youtube" ] ; then

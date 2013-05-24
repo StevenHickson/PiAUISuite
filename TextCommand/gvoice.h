@@ -3,6 +3,9 @@
 
 #include <string>
 #include <curl/curl.h>
+#include <time.h>
+
+#define DTFILE "/dev/shm/time"
 
 using namespace std;
 
@@ -24,8 +27,8 @@ public:
 	~GoogleVoice();
 
 	int Init(void);
-	int Login(bool get_contacts = false);
-	int Login(string login, string passwd, bool get_contacts = false);
+	int Login();
+	int Login(string login, string passwd);
 	//int Logout(void);
 	
     int GetContactInfo();

@@ -14,6 +14,8 @@
 #include <sstream>
 
 #define DATA_SIZE 200
+#define DURATION_DEFAULT "3"
+#define COM_DURATION_DEFAULT "2"
 
 using namespace std;
 
@@ -34,7 +36,9 @@ public:
     bool quiet;
     bool differentHW;
     float thresh;
-    int duration;
+    //I'm storing the durations as strings because it makes the commands less messy and requires less overhead
+    string duration;
+    string command_duration;
     string recordHW;
     string keyword;
     string config_file;
@@ -61,6 +65,5 @@ public:
     static int CurlWriter(char *data, size_t size, size_t nmemb, string *buffer);
 };
 
-#define DURATION_DEFAULT 3
 
 #endif

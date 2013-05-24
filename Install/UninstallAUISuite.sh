@@ -13,6 +13,11 @@ echo "Uninstalling downloader script"
 sudo rm -f "$HOME/.down.info"
 sudo rm /usr/bin/download
 
+echo "Uninstalling gvapi script"
+sudo rm -f "$HOME/.gv"
+sudo rm -f /usr/bin/gvapi
+sudo rm -f /usr/share/man/man8/gvapi.8.gz
+
 echo "Uninstalling gtextcommand script"
 sudo rm -f "$HOME/.gtext"
 sudo rm -f /usr/bin/gtextcommand

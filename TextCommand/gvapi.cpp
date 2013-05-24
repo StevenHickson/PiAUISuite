@@ -1,4 +1,4 @@
-// GoogleVoice API. v1.0.1 Steven Hickson
+// GoogleVoice API. v2.0.1 Steven Hickson
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,26 +16,20 @@ int main(int argc, char *argv[])
 {
 	GoogleVoice gv;
 	int a,d,r;
-    bool check_sms = false, send_sms = false, delete_sms = false, return_rnr = false, contact_info = false;
+    bool check_sms = false, send_sms = false, delete_sms = false, contact_info = false;
     string keyword="";
-    string rnr="";
 	string an,am;
-	string au,ap;		// These can be set as your GV user/passwd (so they dont have to be specified via CLI each time).
-						// eg: au="mygmailuser"; ap="mysecretpasswd";
+	string au,ap;
+
     bool config = true;
 
-	while((a=getopt(argc,argv, "id::hvu:p:rcol:k:n:m:")) != -1)
+	while((a=getopt(argc,argv, "d::h?vu:p:irck:n:m:")) != -1)
 	{
 		switch(a)
 		{
             case 'i':
                 contact_info = true;
                 break;
-			case 'h':	// help
-				PrintUsage(1); return 0;
-			case 'v':	// version.
-				printf("GoogleVoice API by Steven Hickson.  %s.  http://code.google.com/p/stevenhickson-code/\n\n", "2.0");
-				return 0;
 			case 'd':	// debug mode.
 				if(optarg) d=atoi(optarg); else d=1;
                 printf("Debugging level %d enabled\n",d);
@@ -65,20 +59,18 @@ int main(int argc, char *argv[])
             case 'k':   // keyword for checking messages
                 keyword = optarg;
                 break;
-            case 'l' :  // login using given rnr credentials
-                rnr = optarg;
-                break;
-            case 'o' :  // output rnr credentials
-                return_rnr = true;
-                break;
 			case '?':
-                printf("Unknown Case\n");
-				if(gv.debug) PrintUsage(); return 0;
+			case 'h':	// help
+				PrintUsage(1); return 0;
+			case 'v':	// version.
+				printf("GoogleVoice API by Steven Hickson.  %s.  https://github.com/StevenHickson/PiAUISuite\n\n", "2.0");
+				return 0;
 		}
 	}
-    if((!au.empty() && ap.empty()) || (!check_sms && !send_sms && !contact_info)) {PrintUsage(1); return 1;}
-
-	//printf("GoogleVoice API by mm_202.\n");
+    if((send_sms && an.empty()) || (!keyword.empty() && !check_sms) || (delete_sms && !check_sms) || (ap.empty() ^ au.empty())) {
+        printf("Error, improper flag combination\n");
+        PrintUsage(1);
+    }
 
 	if(gv.Init()) {cout << "GoogleVoice() failed to initialize.  Blaming curl.  Dying.\n"; return -1;}
     
@@ -103,11 +95,7 @@ int main(int argc, char *argv[])
         ap = string(buf2);
     }
 
-    if(rnr == "")
-	    r = gv.Login(au,ap,contact_info);
-    else
-        gv.Set_rnr(rnr);
-
+	r = gv.Login(au,ap);
 	if((gv.debug&1) || r) printf("gv.Login() returned %d.\n\n", r);
     
     if(contact_info) {
@@ -123,22 +111,17 @@ int main(int argc, char *argv[])
     } else {
 	    r = gv.SendSMS(an,am);
 	    if((gv.debug&2) || r) printf("gv.SendSMS() returned %d.\n\n", r);
-	    if(!r) printf("SMS send successfully.\n");
+	    if(!r) printf("SMS sent successfully.\n");
     }
     
-    if(return_rnr) {
-        gv.Get_rnr(rnr);
-        printf("\nRNR: %s\n",rnr.c_str());
-    }
 	return r;
 }
 
 void PrintUsage(int verbose)
 {
-	printf("Usage: %s -hdv -u [username] -p [password] -c -r -k -n [number] -m [textmsg]\n", "gvapi");	//argv[0]);
+	printf("Usage: %s -hdicr -u [username] -p [password] -k [keyword] -n [number] -m [textmsg]\n", "gvapi");	//argv[0]);
 	if(!verbose) return;
-	printf("\t-v:\t\tGet version information.\n");
 	printf("\t-d{n}:\t\tSet debug (verboseness).  If debug value {n} not specified, defaults to 1.\n\t\t\tdebug bits: 1=output GV calls. 2=dump GV call results.\n");
+    printf("For more help, type man gvapi into your shell\n");
 }
-
 
