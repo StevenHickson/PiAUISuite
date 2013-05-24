@@ -248,7 +248,17 @@ inline void VoiceCommand::ProcessMessage(char* message) {
                 system(tmp.c_str());
             }
             return;
-        } else {
+        } else if( voice[i][0] == '~' ) {
+			// see whether the voice keyword is *anywhere* in the message
+			string v = voice[i].substr(1, string::npos);
+			loc = tmp.find(v);
+			if( loc != string::npos ) {				
+				// if it does, return
+				printf("command: %s\n",commands[i].c_str());
+				system(commands[i].c_str());					
+				return;
+			}				
+		} else {
             regex rexp("\\$(\\d+)"); cmatch m;
             if(regex_search(voice[i].c_str(), m, rexp)) {
                 //Found $ Initiating special options
@@ -350,11 +360,20 @@ void VoiceCommand::GetConfig() {
 }
 
 void VoiceCommand::EditConfig() {
-    printf("Editing config file...\n");
-    printf("This lets you edit the config file.\nThe format is voice==command\nYou can use any character except for newlines or ==\n");
-    printf("You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n");
-    printf("!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?\n");
-    printf("Press any key to continue\n");
+    printf("Editing config file...\n"
+    "This lets you edit the config file.\nThe format is voice==command\nYou can use any character except for newlines or ==\n"
+    "If the voice starts with ~, the program looks for the keyword anywhere. Ex: ~weather would pick up on weather or what's the weather\n"
+    "You can use ... at the end of the command to specify that everything after the given keyword should be options to the command.\n"
+    "Ex: play==playvideo ...\nThis means that if you say \"play Futurama\", it will run the command playvideo Futurama\n"
+    "You can use $# (where # is any number 1 to 9) to represent a variable. These should go in order from 1 to 9\n"
+    "Ex: play $1 season $2 episode $3==playvideo -s $2 -e $3 $1\n"
+    "This means if you say play game of thrones season 1 episode 2, it will run playvideo with the -s flag as 1, the -e flag as 2, and the main argument as game of thrones, i.e. playvideo -s 1 -e 2 game of thrones\n"
+    "Because of these options, it is important that the arguments range from most strict to least strict."
+    "This means that ~ arguments should probably be at the end.\n"
+    "arguments with multiple variables like the play $1 season $2 episode $3 example should be before ones like play... because it will pick the first match\n"
+    "You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n"
+    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==1,!hardware==plughw:1,0\n"
+    "Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
     edit_command += config_file;
