@@ -4,6 +4,14 @@ then
     echo "Usage : $0 <youtube_file_link>"
     echo "e.g : $0 http://www.youtube.com/watch?v=D1R-jKKp3NA"
 else
+    #Some safety so we don't run this a bajillion times
+    omx=`pgrep omxplayer | wc -l`
+    yt=`pgrep youtube | wc -l`
+    ytsearch=`pgrep youtube-search | wc -l`
+    yt=$((yt - ytsearch))
+    if [[ "$omx" -gt 0 ]] || [[ $yt -gt 2 ]] ; then
+        exit 0
+    fi
     if [ -z $DISPLAY ] ; then
         run_command="omxplayer -r -o hdmi"
     else
