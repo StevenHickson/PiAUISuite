@@ -12,17 +12,24 @@ else
     var=$1
     http=`echo "$var" | grep http | wc -l`
     if [[ http -eq 0 ]] ; then
-        count=`cat "$var" | wc -l`
+        count=`echo "$var" | wc -l`
         num=1
         while [ $num -le $count ] ;
         do
-            video=`cat "$var" | head -n $num | tail -n 1`
-            $run_command "$video"
+            video=`echo "$var" | head -n $num | tail -n 1`
+            if [[ "$video" == yt* ]] ; then
+                video="${video/yt/http}"
+            fi
+            todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$video"`
+            $run_command "$todnload"
             num=`expr $num + 1`
         done
     else
     list=`echo "$var" | grep list | wc -l`
     if [[ list -eq 0 ]] ; then
+        if [[ "$var" == yt* ]] ; then
+            var="${var/yt/http}"
+        fi
         todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$var"`
         tot=`echo "$todnload" | wc -l`
         num=1
@@ -36,11 +43,17 @@ else
     else
         echo "Youtube playlist ..."
         num=1
+        if [[ "$var" == yt* ]] ; then
+            var="${var/yt/http}"
+        fi
         todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
         while [ "$todnload" != "" ] ; 
         do
             $run_command "$todnload"
             num=`expr $num + 1`
+            if [[ "$var" == yt* ]] ; then
+                var="${var/yt/http}"
+            fi
             todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
         done
     fi

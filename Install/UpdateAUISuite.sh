@@ -55,6 +55,8 @@ if [ -e "/usr/bin/youtube" ] ; then
     chmod +x /usr/bin/youtube-dlfast
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-search
     chmod +x /usr/bin/youtube-search
+    wget -N -P /usr/share/applications/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.desktop
+    wget -N -P "$HOME/.local/share/midori/scripts/" https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.js
 fi
 
 if [ -e "/usr/bin/voicecommand" ] ; then

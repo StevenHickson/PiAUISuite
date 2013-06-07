@@ -27,6 +27,8 @@ echo "Uninstalling youtube scripts"
 sudo rm -f /usr/bin/youtube
 sudo rm -f /usr/bin/youtube-dlfast
 sudo rm -f /usr/bin/youtube-search
+sudo rm -f /usr/share/applications/yt.desktop
+sudo rm -f "$HOME/.local/share/midori/scripts/yt.js"
 
 echo "Uninstalling voicecommand scripts"
 sudo rm -f /usr/bin/voicecommand

@@ -18,6 +18,10 @@ downloader:
     Uses curl and transmission to find the best torrent based on your input and then starts downloading it.
     http://stevenhickson.blogspot.com/2013/03/automatically-downloading-torrents-with.html
 
+gvapi:    
+    Uses curl and my google voice api. It can check, send, and delete SMS messages. See the man page for more by typing man gavpi
+    http://stevenhickson.blogspot.com/2013/05/using-google-voice-c-api.html
+
 gtextcommand:
     Uses curl and my google voice api in order to make the computer check for text messages every minute and run a command that you send.
     http://stevenhickson.blogspot.com/2013/03/controlling-raspberry-pi-via-text.html

@@ -6,6 +6,10 @@
 #include <iostream>
 #include <fstream>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 #include <vector>
 #include <string>
 #include <curl/curl.h>
@@ -35,6 +39,7 @@ public:
     bool filler;
     bool quiet;
     bool differentHW;
+    bool passthrough;
     float thresh;
     //I'm storing the durations as strings because it makes the commands less messy and requires less overhead
     string duration;
@@ -43,6 +48,9 @@ public:
     string keyword;
     string config_file;
     string response;
+    string lang;
+    string api;
+    int maxResponse;
     
     char errorbuf[CURL_ERROR_SIZE];
     string curlbuf;
@@ -55,10 +63,12 @@ public:
     void GetConfig();
     void EditConfig();
     void CheckConfig();
-    void CheckCmdLineParam(int argc, char* argv[]);
+    inline void CheckConfigParam(int argc, char* argv[]);
+    inline void CheckCmdLineParam(int argc, char* argv[]);
     void DisplayUsage();
     void Setup();
 
+    int Speak(string message);
     int Search(const char* search);
     int Init(void);
 

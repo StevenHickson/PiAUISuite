@@ -9,5 +9,7 @@ clean:
 
 install: google speech-recog.sh voicecommand
 	install google /usr/bin/google
+	install tts /usr/bin/tts
+	install tts-nofill /usr/bin/tts-nofill
 	install speech-recog.sh /usr/bin/speech-recog.sh
 	install voicecommand /usr/bin/voicecommand

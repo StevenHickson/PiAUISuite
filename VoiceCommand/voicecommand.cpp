@@ -3,24 +3,14 @@
 using namespace std;
 using namespace boost;
 
-void replaceAll(string& str, const string& from, const string& to);
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "l:d:D:sbcveiqt:k:r:f:h?";
+static const char *optString = "l:d:D:psbcveiqt:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
-    if(!vc.quiet) {
-        string command;
-        if(vc.filler)
-            command = "tts \"FILL ";
-        else
-            command = "tts-nofill \"";
-        command += vc.response;
-        command += "\" 2>/dev/null 1>/dev/null";
-        system(command.c_str());
-    }
+    vc.Speak(vc.response);
     string command = "speech-recog.sh";
     if(vc.differentHW) {
         command += " -D ";
@@ -28,6 +18,8 @@ inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     }
     command += " -d ";
     command += vc.duration;
+    command += " -l ";
+    command += vc.lang;
     cmd = popen(command.c_str(),"r");
     fscanf(cmd,"\"%[^\"\n]\"\n",message);
     vc.ProcessMessage(message);
@@ -53,26 +45,30 @@ inline float GetVolume(string recordHW, string com_duration, bool nullout) {
 
 int main(int argc, char* argv[]) {
     VoiceCommand vc;
-    //command line options
-    vc.CheckCmdLineParam(argc,argv);
+    //this is a really crude and terrible hack.
+    //It makes it so that the config file doesn't overwrite the command line options
+    //And it allows the config file to be set to something random
+    vc.CheckConfigParam(argc,argv);
     
     FILE *cmd = NULL;
     char message[200];
     message[0] = '\0';
 
     vc.GetConfig();
+    //command line options after the config options
+    vc.CheckCmdLineParam(argc,argv);
     //vc.CheckConfig();
     if(vc.quiet)
-        printf("running in quiet mode\n");
+        fprintf(stderr,"running in quiet mode\n");
     if(vc.ignoreOthers)
-        printf("Not querying for answers\n");
+        fprintf(stderr,"Not querying for answers\n");
     if(vc.edit) {
         vc.EditConfig();
     } else if(vc.continuous) {
-        printf("running in continuous mode\n");
+        fprintf(stderr,"running in continuous mode\n");
         if(vc.verify)
-            printf("verifying command as well\n");
-        printf("keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
+            fprintf(stderr,"verifying command as well\n");
+        fprintf(stderr,"keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
         while(vc.continuous) {
@@ -88,7 +84,7 @@ int main(int argc, char* argv[]) {
                     fclose(cmd);
                     //system("rm -fr /dev/shm/noise.*");
                     //printf("message: %s, keyword: %s\n", message, vc.keyword.c_str());
-                    if(strcmp(message,vc.keyword.c_str()) == 0) {
+                    if(iequals(message,vc.keyword.c_str())) {
                         message[0] = '\0'; //this will clear the first bit
                         ProcessVoice(cmd,vc,message);
                     }
@@ -122,6 +118,8 @@ int main(int argc, char* argv[]) {
         }
         command += " -d ";
         command += vc.duration;
+        command += " -l ";
+        command += vc.lang;
         cmd = popen(command.c_str(),"r");
         fscanf(cmd,"\"%[^\"\n]\"\n",message);
         vc.ProcessMessage(message);
@@ -131,17 +129,35 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
+inline void VoiceCommand::CheckConfigParam(int argc, char* argv[]) {
+    //check to see if they set a different config file
+    int opt=0;
+    opt = getopt( argc, argv, optString );
+    while( opt != -1 ) {
+        switch( opt ) {
+            case 'f':
+                config_file = string(optarg);
+                optind=1;
+                return;
+            default:
+                break;
+        }
+        opt = getopt( argc, argv, optString );
+    }
+    optind=1;
+}
+
+inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
     //check command line configs
     int opt=0;
     opt = getopt( argc, argv, optString );
     while( opt != -1 ) {
         switch( opt ) {
             case 'b':
-                filler = false;
+                filler = !filler;
                 break;
             case 'c':
-                continuous = true;
+                continuous = !continuous;
                 break;
             case 'd':
                 duration = string(optarg);
@@ -149,17 +165,19 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'D':
                 recordHW = string(optarg);
                 differentHW = true;
+            case 'p':
+                passthrough = true;
             case 'v':
-                verify = true;
+                verify = !verify;
                 break;
             case 'e':
                 edit = true;
                 break;
             case 'i':
-                ignoreOthers = true;
+                ignoreOthers = !ignoreOthers;
                 break;
             case 'q':
-                quiet = true;
+                quiet = !quiet;
                 break;
             case 'l':
                 command_duration = string(optarg);
@@ -174,9 +192,6 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 continuous = true;
                 verify = true;
                 keyword = string(optarg);
-                break;
-            case 'f':
-                config_file = string(optarg);
                 break;
             case 'r':
                 response = string(optarg);
@@ -193,6 +208,7 @@ void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
 }
 
 void VoiceCommand::DisplayUsage() {
+    //behold my laziness
     system("man voicecommand");
     exit(0);
 }
@@ -204,6 +220,7 @@ VoiceCommand::VoiceCommand() {
     thresh = 0.7f;
     keyword = "pi";
     response = "Yes sir?";
+    lang="en";
     quiet = false;
     filler = true;
     continuous = false;
@@ -211,9 +228,12 @@ VoiceCommand::VoiceCommand() {
     edit = false;
     ignoreOthers = false;
     differentHW = false;
+    passthrough = false;
     recordHW = "plughw:1,0";
+    api = "";
     duration = DURATION_DEFAULT;
     command_duration = COM_DURATION_DEFAULT;
+    maxResponse = -1;
     char *passPath = getenv("HOME");
     if(passPath == NULL) {
         printf("Could not get $HOME\n");
@@ -231,8 +251,10 @@ VoiceCommand::~VoiceCommand() {
 inline void VoiceCommand::ProcessMessage(char* message) {
     unsigned int i = 0, loc = 0;
     string tmp = message;
+    string sTmp = message;
+    to_upper(sTmp);
     while(i < voice.size()) {
-        loc = tmp.find(voice[i]);
+        loc = sTmp.find(voice[i]);
         if(loc == 0) {
             tmp = commands[i];
             loc = tmp.find("...");
@@ -241,21 +263,33 @@ inline void VoiceCommand::ProcessMessage(char* message) {
                 string newcommand = tmp.substr(0,loc-1);
                 string options = message;
                 newcommand += options.substr(voice[i].length());
-                printf("command: %s\n",newcommand.c_str());
-                system(newcommand.c_str());
+                if(passthrough)
+                    printf("%s",newcommand.c_str());
+                else {
+                    printf("command: %s\n",newcommand.c_str());
+                    system(newcommand.c_str());
+                }
             } else {
-                printf("command: %s\n",tmp.c_str());
-                system(tmp.c_str());
+                if(passthrough)
+                    printf("%s",tmp.c_str());
+                else {
+                    printf("command: %s\n",tmp.c_str());
+                    system(tmp.c_str());
+                }
             }
             return;
         } else if( voice[i][0] == '~' ) {
 			// see whether the voice keyword is *anywhere* in the message
 			string v = voice[i].substr(1, string::npos);
-			loc = tmp.find(v);
+			loc = sTmp.find(v);
 			if( loc != string::npos ) {				
 				// if it does, return
-				printf("command: %s\n",commands[i].c_str());
-				system(commands[i].c_str());					
+                if(passthrough)
+                    printf("%s",commands[i].c_str());
+                else {
+				    printf("command: %s\n",commands[i].c_str());
+				    system(commands[i].c_str());
+                }
 				return;
 			}				
 		} else {
@@ -268,7 +302,7 @@ inline void VoiceCommand::ProcessMessage(char* message) {
                     stringstream replace;
                     replace << "$";
                     replace << j;
-                    replaceAll(match,replace.str(),"([^\t\n]+?)");
+                    replace_all(match,replace.str(),"([^\t\n]+?)");
                 }
                 regex rexp2(match); cmatch n;
                 if(regex_search(message, n, rexp2)) {
@@ -277,10 +311,14 @@ inline void VoiceCommand::ProcessMessage(char* message) {
                         stringstream replace;
                         replace << "$";
                         replace << j;
-                        replaceAll(run, replace.str(), string(n[j]));
+                        replace_all(run, replace.str(), string(n[j]));
                     }
-                    printf("command: %s\n",run.c_str());
-                    system(run.c_str());
+                    if(passthrough)
+                        printf("%s",run.c_str());
+                    else {
+                        printf("command: %s\n",run.c_str());
+                        system(run.c_str());
+                    }
                     return;
                 }
             }
@@ -288,21 +326,21 @@ inline void VoiceCommand::ProcessMessage(char* message) {
         ++i;
     }
     if(ignoreOthers) {
-        printf("Received improper command: %s\n",message);
+        fprintf(stderr,"Received improper command: %s\n",message);
         return;
     }
     string checkit = string(message);
     if(message != NULL && !checkit.empty()) {
-        printf("Attempting to answer: %s\n",message);
+        fprintf(stderr,"Attempting to answer: %s\n",message);
         Init();
         Search(message);
-    } else {
+    } else if(!passthrough) {
         printf("No translation\n");
-    }
+    } 
 }
 
 void VoiceCommand::GetConfig() {
-    printf("Opening config file...\n");
+    fprintf(stderr,"Opening config file...\n");
     ifstream file(config_file.c_str(),ios::in);
     if(!file.is_open()) {
         printf("Can't find config file!\nI'll make one.\n");
@@ -316,7 +354,10 @@ void VoiceCommand::GetConfig() {
         if(line[0] == '!') {
             //This is a special config option
             //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word.
-            string tmp = line.substr(0,8);
+            string tmp = line.substr(0,6);
+            if(tmp.compare("!api==") == 0)
+                api = line.substr(6);
+            tmp = line.substr(0,8);
             if(tmp.compare("!quiet==") == 0)
                 quiet = bool(atoi(line.substr(8).c_str()));
             tmp = line.substr(0,9);
@@ -340,15 +381,24 @@ void VoiceCommand::GetConfig() {
                 recordHW = line.substr(11);
                 differentHW = true;
             }
+            if(tmp.compare("!language==") == 0)
+                lang = line.substr(11);
             if(tmp.compare("!duration==") == 0)
                 duration = line.substr(11);
             tmp = line.substr(0,13);
             if(tmp.compare("!continuous==") == 0)
                 continuous = bool(atoi(line.substr(13).c_str()));
+             tmp = line.substr(0,14);
+             if(tmp.compare("!maxResponse==") == 0) {
+                maxResponse = atoi(line.substr(14).c_str());
+                if (maxResponse < 1)
+                    maxResponse = -1;
+             }
         } else if(loc < 500 && loc != string::npos && line[0] != '#') {
             //This isn't a comment and is formatted properly
             string v = line.substr(0,loc);
             string c = line.substr(loc + 2);
+            to_upper(v);
             voice.push_back(v);
             commands.push_back(c);
         } else if(line[0] != '#') {
@@ -366,13 +416,13 @@ void VoiceCommand::EditConfig() {
     "You can use ... at the end of the command to specify that everything after the given keyword should be options to the command.\n"
     "Ex: play==playvideo ...\nThis means that if you say \"play Futurama\", it will run the command playvideo Futurama\n"
     "You can use $# (where # is any number 1 to 9) to represent a variable. These should go in order from 1 to 9\n"
-    "Ex: play $1 season $2 episode $3==playvideo -s $2 -e $3 $1\n"
-    "This means if you say play game of thrones season 1 episode 2, it will run playvideo with the -s flag as 1, the -e flag as 2, and the main argument as game of thrones, i.e. playvideo -s 1 -e 2 game of thrones\n"
+    "Ex: $1 season $2 episode $3==playvideo -s $2 -e $3 $1\n"
+    "This means if you say game of thrones season 1 episode 2, it will run playvideo with the -s flag as 1, the -e flag as 2, and the main argument as game of thrones, i.e. playvideo -s 1 -e 2 game of thrones\n"
     "Because of these options, it is important that the arguments range from most strict to least strict."
     "This means that ~ arguments should probably be at the end.\n"
     "arguments with multiple variables like the play $1 season $2 episode $3 example should be before ones like play... because it will pick the first match\n"
     "You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n"
-    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==1,!hardware==plughw:1,0\n"
+    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==1,!api==BLANK,!maxResponse==-1,!lang==en,!hardware==plughw:1,0\n"
     "Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
@@ -412,6 +462,66 @@ int VoiceCommand::CurlWriter(char *data, size_t size, size_t nmemb, string *buff
     return 0;
 }
 
+int VoiceCommand::Speak(string message) {
+    if (quiet) {
+	    return 0;
+    }
+
+    string command;
+    if (filler) {
+        command = "tts -l ";
+        command += lang;
+        command += " \"FILL ";
+    } else {
+        command = "tts-nofill -l";
+        command += lang;
+        command += " \"";
+    }
+
+    command += message;
+    command += "\" 2>/dev/null 1>/dev/null";
+    system(command.c_str());
+
+    return 0;
+}
+
+string from_html_entities(string src)
+{
+  struct lookup_s
+  {
+    const string from;
+    const string to;
+  };
+
+  static const struct lookup_s conv[] =
+  {
+    {"&quot;", "\""},
+    {"&#34;", "\""},
+    {"&#034;", "\""},
+    {"&amp;", "&"},
+    {"&#38;", "&"},
+    {"&#038;", "&"},
+    {"&apos;", "'"},
+    {"&#39;", "'"},
+    {"&#039;", "'"},
+    {"&lt;", "<"},
+    {"&#60;", "<"},
+    {"&#060;", "<"},
+    {"&gt;", ">"},
+    {"&#62;", ">"},
+    {"&#062;", ">"},
+    {"", ""}
+  };
+
+  int i;
+
+  for (i = 0; !conv[i].from.empty(); ++i) {
+    replace_all(src, conv[i].from, conv[i].to);
+  }
+
+  return (src);
+}
+
 int VoiceCommand::Search(const char* search) {
     if(!init)
         Init();
@@ -421,56 +531,124 @@ int VoiceCommand::Search(const char* search) {
         return -1;
     }
 
-    string link = "https://www.wolframalpha.com/input/?i=";
-    link += search;
-    replaceAll(link, string(" "), string("%20"));
-    //printf("link: %s\n",link.c_str());
-    curl_easy_setopt(hcurl, CURLOPT_URL, link.c_str());
-    curlbuf.clear();
-    cr = curl_easy_perform(hcurl);
-    if (cr != CURLE_OK) {
-        cout << "curl() error on getting link: " << errorbuf << endl;
-        return -3;
-    }
-
-    if (debug & 2) cout << "\nLink curlbuf: [" << curlbuf << "]\n";
-
-    regex rexp("0200\\.push\\( \\{\"stringified\": \"(.+?)\",\"");
-    cmatch m;
-    if (regex_search(curlbuf.c_str(), m, rexp)) {
-        string t = string(m[1]);
-        printf("%s\n", t.c_str());
-        if(!quiet) {
-            string speak;
-            if(filler) 
-                speak = "tts \"FILL ";
-            else 
-                speak ="tts-nofill \"";
-            replaceAll(t,"\\n"," ");
-            replaceAll(t,"|"," ");
-            replaceAll(t,"\\"," ");
-            speak += t;
-            speak += "\" 2>/dev/null";
-            system(speak.c_str());
+    if(api.empty()) {
+        string link = "https://www.wolframalpha.com/input/?i=";
+        link += search;
+        replace_all(link, string(" "), string("%20"));
+        //printf("link: %s\n",link.c_str());
+        curl_easy_setopt(hcurl, CURLOPT_URL, link.c_str());
+        curlbuf.clear();
+        cr = curl_easy_perform(hcurl);
+        if (cr != CURLE_OK) {
+            cout << "curl() error on getting link: " << errorbuf << endl;
+            return -3;
         }
-        return 0;
+
+        if (debug & 2) cout << "\nLink curlbuf: [" << curlbuf << "]\n";
+
+        regex rexp("0200\\.push\\( \\{\"stringified\": \"(.+?)\",\"");
+        cmatch m;
+        if (regex_search(curlbuf.c_str(), m, rexp)) {
+            string t = string(m[1]);
+            replace_all(t,"\\n",". \n");
+            printf("%s\n", t.c_str());
+            Speak(t);
+            return 0;
+        } else {
+            cout << "Could not find answer. Try again.\n";
+            return -1;
+        }
     } else {
-        cout << "Could not find answer. Try again.\n";
-        return -1;
-    }
+        string link = "http://api.wolframalpha.com/v2/query?appid=";
+        link += api;
+        link += "&reinsterpret=true&translation=true&format=plaintext&input=";
+        char *curllink = curl_easy_escape(hcurl, search, 0);
+        link += curllink;
+        curl_free(curllink);
+        //printf("link: %s\n",link.c_str());
+        curl_easy_setopt(hcurl, CURLOPT_URL, link.c_str());
+        curlbuf.clear();
+        cr = curl_easy_perform(hcurl);
+        if (cr != CURLE_OK) {
+            cout << "curl() error on getting link: " << errorbuf << endl;
+            return -3;
+        }
 
+        if (debug & 2) cout << "\nLink curlbuf: [" << curlbuf << "]\n";
+
+        if (1) {
+	        using boost::property_tree::ptree;
+	        ptree pt;
+	        stringstream ss;
+	        ss << string(curlbuf);
+	        read_xml(ss, pt);
+	        string result = "";
+	        string plain;
+	        int limit = maxResponse;
+	        BOOST_FOREACH( ptree::value_type const& v, pt.get_child("queryresult") ) {
+	            if (v.first == "pod") {
+		            string title = v.second.get<string>("<xmlattr>.title");
+		            BOOST_FOREACH( ptree::value_type const& v2, v.second.get_child("subpod") ) {
+		                if (limit != 0 && v2.first == "plaintext") {
+			                plain = v2.second.data();
+			                if (!plain.empty()) {
+			                    if (title == "Input interpretation" || title == "Input") {
+				                    printf("%s : %s\n", title.c_str(), plain.c_str());
+			                    } else {
+				                    if (title != "Response") {
+				                        result += title + " : ";
+		 		                    }
+				                    result += plain + "\n";
+				                    limit--;
+			                    }
+			                }
+		                }
+		            }
+	            }
+            }	
+	        if (result.empty()) {
+	            BOOST_FOREACH( ptree::value_type const& v, pt.get_child("queryresult") ) {
+		            if (v.first == "didyoumeans") {
+		                result = v.second.get<string>("didyoumean");
+		                printf("No luck, will try with %s\n", result.c_str());
+		                return Search(result.c_str());
+		            }
+                }
+	            cout << "Could not find answer. Try again.\n";
+	        } else {
+                result = from_html_entities(result);
+                printf("%s\n", result.c_str());
+                Speak(result);
+                return 0;
+	        }
+        } else {
+            regex rexp("<plaintext>([^<].+?)</plaintext>");
+            smatch m;
+            string::const_iterator endbuf = curlbuf.end();
+            if (regex_search(curlbuf, m, rexp) 
+        && regex_search(m[1].second, endbuf, m, rexp)) {
+                //char * curlrep = curl_easy_unescape(hcurl, m.str(1).c_str(), 0, NULL);
+                //string t = string(curlrep);
+                //curl_free(curlrep);
+	            string t = string(m.str(1));
+	            t = from_html_entities(t);
+                printf("%s\n", t.c_str());
+	            Speak(t);
+                return 0;
+            } else {
+	            regex rexp2("<didyoumean [^>]*?>(.+?)</didyoumean>");
+    	        cmatch m2;
+    	        if (regex_search(curlbuf.c_str(), m2, rexp2)) {
+	                printf("No luck, will try with %s\n", m2.str(1).c_str());
+	                return Search(m2.str(1).c_str());
+	            }
+
+                cout << "Could not find answer. Try again.\n";
+                return -1;
+            }
+        }
+    }
     return 0;
-}
-
-//little helper function
-void replaceAll(string& str, const string& from, const string& to) {
-    if(from.empty())
-        return;
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-    }
 }
 
 void changemode(int dir)
@@ -689,7 +867,7 @@ void VoiceCommand::Setup() {
                 command += duration;
                 cmd = popen(command.c_str(),"r");
                 fscanf(cmd,"\"%[^\"\n]\"\n",message); 
-                if(strcmp(message,keyword.c_str()) == 0)
+                if(iequals(message,keyword.c_str()))
                     printf("I got %s, which was a perfect match!\n",message);
                 else
                     printf("I got %s, which was different than what you typed: %s\n",message,keyword.c_str());
