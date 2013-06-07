@@ -131,6 +131,7 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp ../Youtube/youtube-dlfast /usr/bin/
     sudo cp ../Youtube/youtube-search /usr/bin/
     sudo cp ../Youtube/yt.desktop /usr/share/applications/
+    mkdir -p "$HOME/.local/share/midori/scripts"
     cp ../Youtube/yt.js "$HOME/.local/share/midori/scripts/" 
     #I don't know if you need to do this. It kind of seems like gconftool doesn't work anymore, but just in case
     gconftool-2 -s /desktop/gnome/url-handlers/yt/command '/usr/bin/youtube %s' --type String
