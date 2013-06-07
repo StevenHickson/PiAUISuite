@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Youtube
+Type=Application
+Exec=/usr/bin/youtube %u
+Icon=web-browser
+Terminal=false
+Type=Application
+Categories=AudioVideo;
+MimeType=x-scheme-handler/yt
+NoDisplay=true
