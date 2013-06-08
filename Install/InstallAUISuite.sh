@@ -138,6 +138,7 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     gconftool-2 -s /desktop/gnome/url-handlers/yt/enabled --type Boolean true
     #This however, I'm fairly certain I need
     sudo update-desktop-database
+    sudo youtube-dl -U
 else
     echo "Skipping youtube install"
 fi

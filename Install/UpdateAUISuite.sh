@@ -59,6 +59,7 @@ if [ -e "/usr/bin/youtube" ] ; then
     mkdir -p "$HOME/.local/share/midori/scripts"
     wget -N -P "$HOME/.local/share/midori/scripts/" https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.js
     update-desktop-database
+    youtube-dl -U
 fi
 
 if [ -e "/usr/bin/voicecommand" ] ; then
