@@ -6,6 +6,17 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+#Get architecture
+ARCH=`uname -m`
+if [ "$ARCH" == "armv6l" ] ; then
+    DIR=""
+elif [ "$ARCH" == "x86" ] ; then
+    DIR="x86/"
+elif [ "$ARCH" == "x86_64" ] ; then
+    DIR="x64/"
+fi
+ROOT_DIR="https://raw.github.com/StevenHickson/PiAUISuite/master"
+
 #I should first try to update the Update script
 wget https://raw.github.com/StevenHickson/PiAUISuite/master/Install/UpdateAUISuite.sh
 difference=`diff UpdateAUISuite.sh UpdateAUISuite.sh.1`
@@ -30,19 +41,28 @@ fi
 
 if [ -e "/usr/bin/download" ] ; then
     echo "Updating download ..."
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/DownloadController/download
+    tmp="$ROOT_DIR/DownloadController/"
+    tmp+="$DIR"
+    tmp+="download"
+    wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/download
 fi
 
 if [ -e "/usr/bin/gtextcommand" ] ; then
     echo "Updating gtextcommand ..."
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gtextcommand
+    tmp="$ROOT_DIR/TextCommand/"
+    tmp+="$DIR"
+    tmp+="gtextcommand"
+    wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/gtextcommand
 fi
 
 if [ -e "/usr/bin/gvapi" ] ; then
     echo "Updating gvapi ..."
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gvapi
+    tmp="$ROOT_DIR/TextCommand/"
+    tmp+="$DIR"
+    tmp+="gvapi"
+    wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/gvapi
     wget -N -P /usr/share/man/man8/ https://raw.github.com/StevenHickson/PiAUISuite/master/TextCommand/gvapi.8.gz
 fi
@@ -53,7 +73,10 @@ if [ -e "/usr/bin/youtube" ] ; then
     chmod +x /usr/bin/youtube
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-dlfast
     chmod +x /usr/bin/youtube-dlfast
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-search
+    tmp="$ROOT_DIR/Youtube/"
+    tmp+="$DIR"
+    tmp+="youtube-search"
+    wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/youtube-search
     wget -N -P /usr/share/applications/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.desktop
     mkdir -p "$HOME/.local/share/midori/scripts"
@@ -64,7 +87,10 @@ fi
 
 if [ -e "/usr/bin/voicecommand" ] ; then
     echo "Updating voicecommand ..."
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/voicecommand
+    tmp="$ROOT_DIR/VoiceCommand/"
+    tmp+="$DIR"
+    tmp+="voicecommand"
+    wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/voicecommand
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/google
     chmod +x /usr/bin/google

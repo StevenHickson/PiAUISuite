@@ -4,13 +4,23 @@
 echo "Installing AUI Suite by Steven Hickson"
 echo "If you have issues, visit stevenhickson.blogspot.com or email me@stevenhickson.com"
 
+#Get architecture
+ARCH=`uname -m`
+if [ "$ARCH" == "armv6l" ] ; then
+    DIR=""
+elif [ "$ARCH" == "x86" ] ; then
+    DIR="x86/"
+elif [ "$ARCH" == "x86_64" ] ; then
+    DIR="x64/"
+fi
+
 #Ask to install dependencies
 install_method=`ps -ea | grep apt-get`
 if [ -z $install_method ] ; then
 echo "Install dependencies? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
-    sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
+    sudo apt-get install locate curl libboost1.46-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
 fi
 fi
 
@@ -51,7 +61,10 @@ echo "$host"   | sudo tee -a "$HOME/.down.info" >/dev/null
 echo "$port"   | sudo tee -a "$HOME/.down.info" >/dev/null
 echo "$user"   | sudo tee -a "$HOME/.down.info" >/dev/null
 echo "$passwd" | sudo tee -a "$HOME/.down.info" >/dev/null
-sudo cp ../DownloadController/download /usr/bin/download
+tmp="../DownloadController/"
+tmp+="$DIR"
+tmp+="download"
+sudo cp "$tmp" /usr/bin/download
 echo "Done installing download!"
 else
     echo "Skipping downloader install"
@@ -72,7 +85,10 @@ if [ -e "$HOME/.gv" ] ; then
 fi
 echo "$user"   | sudo tee -a "$HOME/.gv" >/dev/null
 echo "$passwd"   | sudo tee -a "$HOME/.gv" >/dev/null
-sudo cp ../TextCommand/gvapi /usr/bin/gvapi
+tmp="../TextCommand/"
+tmp+="$DIR"
+tmp+="gvapi"
+sudo cp "$tmp" /usr/bin/gvapi
 sudo cp ../TextCommand/gvapi.8.gz /usr/share/man/man8/
 echo "Done installing gvapi!"
 else
@@ -100,7 +116,10 @@ echo "$user"   | sudo tee -a "$HOME/.gtext" >/dev/null
 echo "$passwd"   | sudo tee -a "$HOME/.gtext" >/dev/null
 echo "$key"   | sudo tee -a "$HOME/.gtext" >/dev/null
 echo "$number" | sudo tee -a "$HOME/.gtext" >/dev/null
-sudo cp ../TextCommand/gtextcommand /usr/bin/gtextcommand
+tmp="../TextCommand/"
+tmp+="$DIR"
+tmp+="gtextcommand"
+sudo cp "$tmp" /usr/bin/gtextcommand
 #Add to cron.d
 echo "Done installing, setting up cron script ..."
 if [ -e "/etc/cron.d/gtextcommand" ] ; then
@@ -127,9 +146,12 @@ fi
 echo "Install youtube scripts? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
+    tmp="../Youtube/"
+    tmp+="$DIR"
+    tmp+="youtube-search"
     sudo cp ../Youtube/youtube /usr/bin/
     sudo cp ../Youtube/youtube-dlfast /usr/bin/
-    sudo cp ../Youtube/youtube-search /usr/bin/
+    sudo cp "$tmp" /usr/bin/
     sudo cp ../Youtube/yt.desktop /usr/share/applications/
     mkdir -p "$HOME/.local/share/midori/scripts"
     cp ../Youtube/yt.js "$HOME/.local/share/midori/scripts/" 
@@ -146,7 +168,10 @@ fi
 echo "Install voicecommand? y/n"
 read option
 if [ $option == "y" ] || [ $option == "Y" ] ; then
-    sudo cp ../VoiceCommand/voicecommand /usr/bin/
+    tmp="../VoiceCommand/"
+    tmp+="$DIR"
+    tmp+="voicecommand"
+    sudo cp "$tmp" /usr/bin/
     sudo cp ../VoiceCommand/google /usr/bin/
     sudo cp ../VoiceCommand/tts /usr/bin/
     sudo cp ../VoiceCommand/tts-nofill /usr/bin/
