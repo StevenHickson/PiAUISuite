@@ -3,7 +3,7 @@ BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 #Set Architecture
 ARCH := arm
 DEVEL := rel
-LIBS := -lcurl -lboost_regex
+LIBS := -lcurl -lboost 
 
 #Compilers
 ifeq ($(ARCH),arm)
@@ -26,10 +26,10 @@ FLAGS := -O3
 endif
 
 gtextcommand: gtextcommand.cpp gvoice.cpp gvoice.h
-	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gtextcommand) gvoice.o gtextcommand.cpp
+	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gtextcommand) $(addprefix $(OUTPUT), gvoice.o) gtextcommand.cpp
 
 gvapi: gvapi.cpp gvoice.cpp gvoice.h
-	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gvapi) gvoice.o gvapi.cpp
+	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gvapi) $(addprefix $(OUTPUT), gvoice.o) gvapi.cpp
 
 gvoice: gvoice.cpp gvoice.h
 	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -c -o $(addprefix $(OUTPUT), gvoice.o) gvoice.cpp
