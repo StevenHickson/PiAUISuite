@@ -25,14 +25,14 @@ else
 FLAGS := -O3
 endif
 
-gtextcommand: gtextcommand.cpp gvoice.o
+gtextcommand: gtextcommand.cpp gvoice.cpp gvoice.h
 	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gtextcommand) gvoice.o gtextcommand.cpp
 
-gvapi: gvapi.cpp gvoice.o
+gvapi: gvapi.cpp gvoice.cpp gvoice.h
 	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gvapi) gvoice.o gvapi.cpp
 
 gvoice: gvoice.cpp gvoice.h
-	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), gvoice.o) gvoice.cpp
+	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -c -o $(addprefix $(OUTPUT), gvoice.o) gvoice.cpp
 
 clean:
 	rm *.o gtextcommand 2>/dev/null

@@ -26,11 +26,8 @@ else
 FLAGS := -O3
 endif
 
-download: download.cpp downconn.o
-	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), download) downconn.o download.cpp
-
-downconn: downconn.cpp downconn.h
-	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), downconn.o) downconn.cpp 
+download: download.cpp downconn.cpp downconn.h
+	$(CC) $(BLDDEF) $(FLAGS) $(LIBS) -o $(addprefix $(OUTPUT), download) downconn.cpp download.cpp
 
 clean:
 	rm *.o download 2>/dev/null
