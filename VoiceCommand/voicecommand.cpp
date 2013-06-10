@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
-        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\"http://www.google.com/speech-api/v1/recognize?lang=" + vc.lang + " | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'";
+        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=" + vc.lang + " | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'";
         while(vc.continuous) {
             volume = GetVolume(vc.recordHW, vc.command_duration, true);
             if(volume > vc.thresh) {
@@ -328,6 +328,7 @@ inline void VoiceCommand::ProcessMessage(char* message) {
     }
     if(ignoreOthers) {
         fprintf(stderr,"Received improper command: %s\n",message);
+        Speak("Received improper command");
         return;
     }
     string checkit = string(message);
@@ -337,6 +338,7 @@ inline void VoiceCommand::ProcessMessage(char* message) {
         Search(message);
     } else if(!passthrough) {
         printf("No translation\n");
+        Speak("No translation");
     } 
 }
 
