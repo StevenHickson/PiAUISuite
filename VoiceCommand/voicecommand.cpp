@@ -71,13 +71,14 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
+        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\"http://www.google.com/speech-api/v1/recognize?lang=" + vc.lang + " | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'";
         while(vc.continuous) {
             volume = GetVolume(vc.recordHW, vc.command_duration, true);
             if(volume > vc.thresh) {
                 //printf("Found volume %f above thresh %f\n",volume,vc.thresh);
                 if(vc.verify) {
                     system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>/dev/null 2>/dev/null");
-                    cmd = popen("wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=en | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'","r");
+                    cmd = popen(cont_com.c_str(),"r");
                     if(cmd == NULL)
                         printf("ERROR\n");
                     fscanf(cmd,"\"%[^\"\n]\"\n",message);
