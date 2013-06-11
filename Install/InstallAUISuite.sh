@@ -150,6 +150,7 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     tmp+="$DIR"
     tmp+="youtube-search"
     sudo cp ../Youtube/youtube /usr/bin/
+    sudo cp ../Youtube/youtube-safe /usr/bin/
     sudo cp ../Youtube/youtube-dlfast /usr/bin/
     sudo cp "$tmp" /usr/bin/
     sudo cp ../Youtube/yt.desktop /usr/share/applications/
