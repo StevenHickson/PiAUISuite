@@ -12,7 +12,7 @@ using namespace std;
 class GoogleVoice {
 	CURL *hcurl;
 	CURLcode cr;
-	string email,passwd;
+	string email,passwd,myNum;
 	string rnr_se;			// Session token that Google needs. 
 protected:
 	string version;
@@ -37,6 +37,7 @@ public:
     int MarkAsRead(string msg_id);
     int DeleteSMS(string msg_id);
     int BlockSMS(string msg_id);
+    int CallNumber(string to, string from);
     void Get_rnr(string &rnr) {
         rnr = rnr_se;
     }

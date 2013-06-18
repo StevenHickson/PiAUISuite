@@ -558,7 +558,8 @@ int VoiceCommand::Search(const char* search) {
             Speak(t);
             return 0;
         } else {
-            cout << "Could not find answer. Try again.\n";
+            printf("Could not find answer. Try again.\n");
+            Speak("Could not find answer. Try again");
             return -1;
         }
     } else {
@@ -617,7 +618,8 @@ int VoiceCommand::Search(const char* search) {
 		                return Search(result.c_str());
 		            }
                 }
-	            cout << "Could not find answer. Try again.\n";
+	            printf("Could not find answer. Try again.\n");
+                Speak("Could not find answer. Try again");
 	        } else {
                 result = from_html_entities(result);
                 printf("%s\n", result.c_str());
@@ -646,7 +648,8 @@ int VoiceCommand::Search(const char* search) {
 	                return Search(m2.str(1).c_str());
 	            }
 
-                cout << "Could not find answer. Try again.\n";
+                printf("Could not find answer. Try again.\n");
+                Speak("Could not find answer. Try again");
                 return -1;
             }
         }

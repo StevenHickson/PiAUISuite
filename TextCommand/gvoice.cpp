@@ -105,6 +105,25 @@ int GoogleVoice::BlockSMS(string msg_id)
     return 0;
 }
 
+int GoogleVoice::CallNumber(string to, string from) {
+	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}
+	if(Login()) return -1;
+	
+    curl_easy_setopt(hcurl, CURLOPT_URL, "https://www.google.com/voice/call/connect/");
+	curl_easy_setopt(hcurl, CURLOPT_POST, 1);
+	
+	string data = "forwardingNumber="+from;
+    data += "&outgoingNumber="+to;
+    data += "&_rnr_se="+rnr_se;
+    data += "&phoneType=2&remember=0&subscriberNumber=undefined";
+	
+	curl_easy_setopt(hcurl, CURLOPT_POSTFIELDS, data.c_str());	// TODO: check this and make sure it doesnt hold on to passed data ptr.
+	curlbuf.clear(); cr=curl_easy_perform(hcurl);
+	if(cr!=CURLE_OK) {cout << "curl() error on marking sms as read: " << errorbuf << endl; return -3;}
+
+    return 0
+}
+
 int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool delete_sms)
 {
 	if(!hcurl) {cout << "hcurl is NULL.  Did you forget to call Init()?\n"; return -1;}

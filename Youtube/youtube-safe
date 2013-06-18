@@ -26,59 +26,69 @@ else
     fi
 
     var=$1
-    http=`echo "$var" | grep http | wc -l`
-    if [[ http -eq 0 ]] ; then
-        count=`echo "$var" | wc -l`
-        num=1
-        while [ $num -le $count ] ;
-        do
-            video=`echo "$var" | head -n $num | tail -n 1`
-            if [[ "$video" == yt* ]] ; then
-                video="${video/yt/http}"
+
+    #check to see if we should use get_flash_videos instead
+    other=`echo "$var" | grep "hulu\|vimeo" | wc -l`
+    if [[ "$other" -eq 0 ]] ; then
+        http=`echo "$var" | grep http | wc -l`
+        if [[ "$http" -eq 0 ]] ; then
+            count=`echo "$var" | wc -l`
+            num=1
+            while [ $num -le $count ] ;
+            do
+                video=`echo "$var" | head -n $num | tail -n 1`
+                if [[ "$video" == yt* ]] ; then
+                    video="${video/yt/http}"
+                fi
+                todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$video"`
+                wget -O -quiet "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
+                sleep $BUFFER_TIME
+                $run_command "$STREAM_FIFO"
+                num=`expr $num + 1`
+            done
+        else
+            list=`echo "$var" | grep list | wc -l`
+            if [[ list -eq 0 ]] ; then
+                if [[ "$var" == yt* ]] ; then
+                    var="${var/yt/http}"
+                fi
+                todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$var"`
+                tot=`echo "$todnload" | wc -l`
+                num=1
+                while [ $num -le $tot ] ; 
+                do
+                    echo "$num out of $tot"
+                    link=`echo "$todnload" | head -n $num | tail -n 1`
+                    wget -O -quiet "$STREAM_FIFO" "$link" & 1>/dev/null 2>/dev/null
+                    sleep $BUFFER_TIME
+                    $run_command "$STREAM_FIFO"
+                    num=`expr $num + 1`
+                done
+            else
+                echo "Youtube playlist ..."
+                num=1
+                if [[ "$var" == yt* ]] ; then
+                    var="${var/yt/http}"
+                fi
+                todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
+                while [ "$todnload" != "" ] ; 
+                do
+                    wget -O -quiet "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
+                    sleep $BUFFER_TIME
+                    $run_command "$STREAM_FIFO"
+                    num=`expr $num + 1`
+                    if [[ "$var" == yt* ]] ; then
+                        var="${var/yt/http}"
+                    fi
+                    todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
+                done
             fi
-            todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$video"`
-            wget -O "$STREAM_FIFO" "$todnload" &
-            sleep $BUFFER_TIME
-            $run_command "$STREAM_FIFO"
-            num=`expr $num + 1`
-        done
-    else
-    list=`echo "$var" | grep list | wc -l`
-    if [[ list -eq 0 ]] ; then
-        if [[ "$var" == yt* ]] ; then
-            var="${var/yt/http}"
         fi
-        todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$var"`
-        tot=`echo "$todnload" | wc -l`
-        num=1
-        while [ $num -le $tot ] ; 
-        do
-            echo "$num out of $tot"
-            link=`echo "$todnload" | head -n $num | tail -n 1`
-            wget -O "$STREAM_FIFO" "$link" &
-            sleep $BUFFER_TIME
-            $run_command "$STREAM_FIFO"
-            num=`expr $num + 1`
-        done
     else
-        echo "Youtube playlist ..."
-        num=1
-        if [[ "$var" == yt* ]] ; then
-            var="${var/yt/http}"
-        fi
-        todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
-        while [ "$todnload" != "" ] ; 
-        do
-            wget -O "$STREAM_FIFO" "$todnload" &
-            sleep $BUFFER_TIME
-            $run_command "$STREAM_FIFO"
-            num=`expr $num + 1`
-            if [[ "$var" == yt* ]] ; then
-                var="${var/yt/http}"
-            fi
-            todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
-        done
-    fi
+        echo "Using get_flash_videos"
+        get_flash_videos -f "$STREAM_FIFO" -q -y "$var" & 1>/dev/null 2>/dev/null
+        sleep 1
+        $run_command "$STREAM_FIFO"
     fi
     rm $STREAM_FIFO
 fi
