@@ -24,6 +24,7 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
         sudo apt-get install locate curl libboost1.50-dev libboost-regex1.50-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
     else
         sudo apt-get install locate curl libboost1.46-dev libboost-regex1.46-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
+    fi
 fi
 fi
 
