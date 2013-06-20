@@ -18,7 +18,7 @@ else
         run_command="xterm -fullscreen -bg black -fg black -e omxplayer -r -o hdmi"
     fi
     var=$1
-    http=`echo "$var" | grep http | wc -l`
+    http=`echo "$var" | grep "http\|yt" | wc -l`
     if [[ http -eq 0 ]] ; then
         count=`echo "$var" | wc -l`
         num=1

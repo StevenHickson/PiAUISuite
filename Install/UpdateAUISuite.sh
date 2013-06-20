@@ -17,6 +17,8 @@ elif [ "$ARCH" == "x86_64" ] ; then
 fi
 ROOT_DIR="https://raw.github.com/StevenHickson/PiAUISuite/master"
 
+USER_HOME="/home/${SUDO_USER}"
+
 #I should first try to update the Update script
 wget https://raw.github.com/StevenHickson/PiAUISuite/master/Install/UpdateAUISuite.sh
 difference=`diff UpdateAUISuite.sh UpdateAUISuite.sh.1`
@@ -81,8 +83,8 @@ if [ -e "/usr/bin/youtube" ] ; then
     wget -N -P /usr/bin/ "$tmp"
     chmod +x /usr/bin/youtube-search
     wget -N -P /usr/share/applications/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.desktop
-    mkdir -p "$HOME/.local/share/midori/scripts"
-    wget -N -P "$HOME/.local/share/midori/scripts/" https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.js
+    mkdir -p "$USER_HOME/.local/share/midori/scripts"
+    wget -N -P "$USER_HOME/.local/share/midori/scripts/" https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/yt.js
     update-desktop-database
     youtube-dl -U
 fi

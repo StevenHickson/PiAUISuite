@@ -30,7 +30,7 @@ else
     #check to see if we should use get_flash_videos instead
     other=`echo "$var" | grep "hulu\|vimeo" | wc -l`
     if [[ "$other" -eq 0 ]] ; then
-        http=`echo "$var" | grep http | wc -l`
+        http=`echo "$var" | grep "http\|ytb" | wc -l`
         if [[ "$http" -eq 0 ]] ; then
             count=`echo "$var" | wc -l`
             num=1

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=YoutubeSafe
+Type=Application
+Exec=/usr/bin/youtube-safe %u
+Icon=web-browser
+Terminal=false
+Type=Application
+Categories=AudioVideo;
+MimeType=x-scheme-handler/ytb
+NoDisplay=true

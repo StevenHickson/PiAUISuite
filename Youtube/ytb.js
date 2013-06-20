@@ -12,10 +12,11 @@
 // @name			YouTube Launcher
 // @namespace		None
 // @description		Plays youtube videos with omxplayer
-// @include			http*://youtube.com/*
-// @include			http*://*.youtube.com/*
-// @include			http*://youtube-nocookie.com/*
-// @include			http*://*.youtube-nocookie.com/*
+// @include         *
+// @exclude			http*://youtube.com/*
+// @exclude			http*://*.youtube.com/*
+// @exclude			http*://youtube-nocookie.com/*
+// @exclude			http*://*.youtube-nocookie.com/*
 //
 // ==/UserScript==
 
@@ -60,8 +61,8 @@ function add_play_flash_div(flash){            // places the button-like div bef
     placeholder.style.color='black';
     placeholder.innerHTML="[Play Video]";
     var tmp=document.location.href;
-    tmp=tmp.replace("https","yt");
-    placeholder.href=tmp.replace("http","yt");
+    tmp=tmp.replace("https","ytb");
+    placeholder.href=tmp.replace("http","ytb");
     return true;
 }
 

@@ -14,8 +14,14 @@ elif [ "$ARCH" == "x86_64" ] ; then
     DIR="x64/"
 fi
 
+if [ "$(id -u)" != "0" ]; then
+    USER_HOME="$HOME"
+else
+    USER_HOME="/home/${SUDO_USER}"
+fi
+
 #Ask to install dependencies
-install_method=`ps -ea | grep apt-get`
+install_method=`pgrep apt-get`
 if [ -z $install_method ] ; then
 echo "Install dependencies? y/n"
 read option
@@ -57,14 +63,14 @@ echo "Enter username, press enter if none"
 read user
 echo "Enter password, press enter if none"
 read passwd
-#print commands to $HOME/.down.info
-if [ -e "$HOME/.down.info" ] ; then
-    sudo rm -f "$HOME/.down.info"
+#print commands to $USER_HOME/.down.info
+if [ -e "$USER_HOME/.down.info" ] ; then
+    sudo rm -f "$USER_HOME/.down.info"
 fi
-echo "$host"   | sudo tee -a "$HOME/.down.info" >/dev/null
-echo "$port"   | sudo tee -a "$HOME/.down.info" >/dev/null
-echo "$user"   | sudo tee -a "$HOME/.down.info" >/dev/null
-echo "$passwd" | sudo tee -a "$HOME/.down.info" >/dev/null
+echo "$host"   | sudo tee -a "$USER_HOME/.down.info" >/dev/null
+echo "$port"   | sudo tee -a "$USER_HOME/.down.info" >/dev/null
+echo "$user"   | sudo tee -a "$USER_HOME/.down.info" >/dev/null
+echo "$passwd" | sudo tee -a "$USER_HOME/.down.info" >/dev/null
 tmp="../DownloadController/"
 tmp+="$DIR"
 tmp+="download"
@@ -83,12 +89,12 @@ echo "Enter google voice username: "
 read user
 echo "Enter google voice password: "
 read passwd
-#print commands to $HOME/.gtext
-if [ -e "$HOME/.gv" ] ; then
-    sudo rm -f "$HOME/.gv"
+#print commands to $USER_HOME/.gtext
+if [ -e "$USER_HOME/.gv" ] ; then
+    sudo rm -f "$USER_HOME/.gv"
 fi
-echo "$user"   | sudo tee -a "$HOME/.gv" >/dev/null
-echo "$passwd"   | sudo tee -a "$HOME/.gv" >/dev/null
+echo "$user"   | sudo tee -a "$USER_HOME/.gv" >/dev/null
+echo "$passwd"   | sudo tee -a "$USER_HOME/.gv" >/dev/null
 tmp="../TextCommand/"
 tmp+="$DIR"
 tmp+="gvapi"
@@ -112,14 +118,14 @@ echo "Enter command keyword, ex: Cmd (this will proceed every vaild command)"
 read key
 echo "Enter valid number to accept commands from (make sure to put the country code but not the +) ex: 15553334444"
 read number
-#print commands to $HOME/.gtext
-if [ -e "$HOME/.gtext" ] ; then
-    sudo rm -f "$HOME/.gtext"
+#print commands to $USER_HOME/.gtext
+if [ -e "$USER_HOME/.gtext" ] ; then
+    sudo rm -f "$USER_HOME/.gtext"
 fi
-echo "$user"   | sudo tee -a "$HOME/.gtext" >/dev/null
-echo "$passwd"   | sudo tee -a "$HOME/.gtext" >/dev/null
-echo "$key"   | sudo tee -a "$HOME/.gtext" >/dev/null
-echo "$number" | sudo tee -a "$HOME/.gtext" >/dev/null
+echo "$user"   | sudo tee -a "$USER_HOME/.gtext" >/dev/null
+echo "$passwd"   | sudo tee -a "$USER_HOME/.gtext" >/dev/null
+echo "$key"   | sudo tee -a "$USER_HOME/.gtext" >/dev/null
+echo "$number" | sudo tee -a "$USER_HOME/.gtext" >/dev/null
 tmp="../TextCommand/"
 tmp+="$DIR"
 tmp+="gtextcommand"
@@ -158,11 +164,10 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp ../Youtube/youtube-dlfast /usr/bin/
     sudo cp "$tmp" /usr/bin/
     sudo cp ../Youtube/yt.desktop /usr/share/applications/
-    mkdir -p "$HOME/.local/share/midori/scripts"
-    cp ../Youtube/yt.js "$HOME/.local/share/midori/scripts/" 
-    #I don't know if you need to do this. It kind of seems like gconftool doesn't work anymore, but just in case
-    gconftool-2 -s /desktop/gnome/url-handlers/yt/command '/usr/bin/youtube %s' --type String
-    gconftool-2 -s /desktop/gnome/url-handlers/yt/enabled --type Boolean true
+    sudo cp ../Youtube/ytb.desktop /usr/share/applications/
+    mkdir -p "$USER_HOME/.local/share/midori/scripts"
+    cp ../Youtube/yt.js "$USER_HOME/.local/share/midori/scripts/" 
+    cp ../Youtube/ytb.js "$USER_HOME/.local/share/midori/scripts/" 
     #This however, I'm fairly certain I need
     sudo update-desktop-database
     sudo youtube-dl -U
@@ -182,8 +187,8 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp ../VoiceCommand/tts-nofill /usr/bin/
     sudo cp ../VoiceCommand/speech-recog.sh /usr/bin/
     sudo cp ../VoiceCommand/voicecommand.8.gz /usr/share/man/man8/
-    if [ -z "$HOME/.commands.conf" ] ; then
-        cp ../VoiceCommand/commands.conf "$HOME/.commands.conf"
+    if [ -z "$USER_HOME/.commands.conf" ] ; then
+        cp ../VoiceCommand/commands.conf "$USER_HOME/.commands.conf"
     fi
     echo "Would you like voicecommand to try to set itself up? y/n"
     read option
