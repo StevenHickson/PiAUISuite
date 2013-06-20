@@ -115,7 +115,7 @@ if [ -n "$difference" ] ; then
     unlink UpdateAUISuite.sh
     mv UpdateAUISuite.sh.1 UpdateAUISuite.sh
     chmod +x UpdateAUISuite.sh
-    ./UpdateAUISuite.sh
+    ./UpdateAUISuite.sh "$1"
     exit
 else
     rm UpdateAUISuite.sh.1
