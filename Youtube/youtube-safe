@@ -41,7 +41,7 @@ else
                     video="${video/yt/http}"
                 fi
                 todnload=`youtube-dl -i -g --cookies /dev/shm/youtube_cookie.txt "$video"`
-                wget -O -quiet "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
+                wget -O "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
                 sleep $BUFFER_TIME
                 $run_command "$STREAM_FIFO"
                 num=`expr $num + 1`
@@ -59,7 +59,7 @@ else
                 do
                     echo "$num out of $tot"
                     link=`echo "$todnload" | head -n $num | tail -n 1`
-                    wget -O -quiet "$STREAM_FIFO" "$link" & 1>/dev/null 2>/dev/null
+                    wget -O "$STREAM_FIFO" "$link" & 1>/dev/null 2>/dev/null
                     sleep $BUFFER_TIME
                     $run_command "$STREAM_FIFO"
                     num=`expr $num + 1`
@@ -73,7 +73,7 @@ else
                 todnload=`youtube-dl -g --cookies /dev/shm/youtube_cookie.txt --playlist-start $num --playlist-end $num "$var"`
                 while [ "$todnload" != "" ] ; 
                 do
-                    wget -O -quiet "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
+                    wget -O "$STREAM_FIFO" "$todnload" & 1>/dev/null 2>/dev/null
                     sleep $BUFFER_TIME
                     $run_command "$STREAM_FIFO"
                     num=`expr $num + 1`
