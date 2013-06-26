@@ -19,7 +19,21 @@
 //
 // ==/UserScript==
 
-xpath("//embed").forEach(function(embed) {            // put all embed objects in array and check each
+var ytbody = document.getElementsByTagName('body')[0];
+var ytdiv = document.createElement('div');
+var ythref = location.href;
+ythref=ythref.replace('https://','yt://');
+ythref=ythref.replace('http://','yt://');
+ytdiv.innerHTML = '<a href="'+ythref+'">OMXPlayer |&gt;</a>';
+ytdiv.style.backgroundColor = '#f3f3f3';
+ytdiv.style.border='1px solid black';
+ytdiv.style.position = 'fixed';
+ytdiv.style.top = '10px';
+ytdiv.style.left = '10px';
+ytbody.appendChild(ytdiv);
+
+
+/*xpath("//embed").forEach(function(embed) {            // put all embed objects in array and check each
     if (embed.parentNode.nodeName != "OBJECT" && embed.parentNode.style.display != "none"){       // handle embeds within objects as objects
 	if(checkforflash(embed)){add_play_flash_div(embed)};
    };
@@ -28,7 +42,8 @@ xpath("//embed").forEach(function(embed) {            // put all embed objects i
 xpath("//object").forEach(function(object) {     
     if(checkforflash(object)){add_play_flash_div(object)};
 });
-
+*/
+/*
 function checkforflash(potl_item){                    // checks the element passed to it for Flash content
     if (potl_item.hasAttribute("flashvars") ){
 	return true
@@ -42,32 +57,48 @@ function checkforflash(potl_item){                    // checks the element pass
     if (potl_item.innerHTML.match(/.swf|shockwave|flash|eyewonder/)) {
 	return true
     };
+    if (potl_item.hasAttribute("class") && potl_item.getAtrribute("class").match(/ytp/)){
+    return true
+    };
     return false;
 };
 
 function add_play_flash_div(flash){            // places the button-like div before the flash node
-    var placeholder=document.createElement("a");
-    savedDisplay = flash.style.display;
-    placeholder.setAttribute("class", "ReplaceVideo");
-    flash.parentNode.insertBefore(placeholder, flash);  
-    flash.style.display='none';               
-    flash.on=false;
+    var ytbody = document.getElementsByTagName('body')[0];
+    var ytdiv = document.createElement('div');
+    var ythref = location.href;
+    ythref=ythref.replace('https://','yt://');
+    ythref=ythref.replace('http://','yt://');
+    ytdiv.innerHTML = '<a href="'+ythref+'">OMX |&gt;</a>';
+    ytdiv.style.backgroundColor = '#f3f3f3';
+    ytdiv.style.border='1px solid black';
+    ytdiv.style.position = 'fixed';
+    ytdiv.style.top = '10px';
+    ytdiv.style.left = '10px';
+    ytbody.appendChild(ytdiv);
     flash.remove();
-    placeholder.style.cursor='pointer';
-    placeholder.style.background='green';  
-    placeholder.style.textAlign='center';
-    placeholder.style.textTransform='capitalize';
-    placeholder.style.color='black';
-    placeholder.innerHTML="[Play Video]";
-    var tmp=document.location.href;
-    tmp=tmp.replace("https","yt");
-    placeholder.href=tmp.replace("http","yt");
     return true;
 }
 
-function xpath (p, context) {
-    if (!context) context = document;
-    var i, arr = [], xpr = document.evaluate(p, context, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-    for (i = 0; item = xpr.snapshotItem(i); i++) arr.push(item);
-    return arr;
-};
+all_objects = document.getElementsByTagName('object');
+all_embeds = document.getElementsByTagName('embed');
+all_divs = document.getElementsByTagName('div');
+
+for (var i = 0; i < all_ojects.length; i++) {
+    if(checkforflash(all_objects[i]) {
+        add_play_flash_div(all_objects[i]);
+    }
+}
+
+for (var i = 0; i < all_embeds.length; i++) {
+    if(checkforflash(all_embeds[i]) {
+        add_play_flash_div(all_embeds[i]);
+    }
+}
+
+for (var i = 0; i < all_divs.length; i++) {
+    if(checkforflash(all_divs[i]) {
+        add_play_flash_div(all_divs[i]);
+    }
+}
+*/

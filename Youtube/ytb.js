@@ -20,6 +20,20 @@
 //
 // ==/UserScript==
 
+var ytbody = document.getElementsByTagName('body')[0];
+var ytdiv = document.createElement('div');
+var ythref = location.href;
+ythref=ythref.replace('https://','ytb://');
+ythref=ythref.replace('http://','ytb://');
+ytdiv.innerHTML = '<a href="'+ythref+'">OMXPlayer |&gt;</a>';
+ytdiv.style.backgroundColor = '#f3f3f3';
+ytdiv.style.border='1px solid black';
+ytdiv.style.position = 'fixed';
+ytdiv.style.top = '10px';
+ytdiv.style.left = '10px';
+ytbody.appendChild(ytdiv);
+
+/*
 xpath("//embed").forEach(function(embed) {            // put all embed objects in array and check each
     if (embed.parentNode.nodeName != "OBJECT" && embed.parentNode.style.display != "none"){       // handle embeds within objects as objects
 	if(checkforflash(embed)){add_play_flash_div(embed)};
@@ -72,3 +86,4 @@ function xpath (p, context) {
     for (i = 0; item = xpr.snapshotItem(i); i++) arr.push(item);
     return arr;
 };
+*/
