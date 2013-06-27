@@ -79,8 +79,6 @@ if [ -e "/usr/bin/voicecommand" ] ; then
     chmod +x /usr/bin/google
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/tts
     chmod +x /usr/bin/tts
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/tts-nofill
-    chmod +x /usr/bin/tts-nofill
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/speech-recog.sh
     chmod +x /usr/bin/speech-recog.sh
     wget -N -P /usr/share/man/man8/ https://raw.github.com/StevenHickson/PiAUISuite/master/VoiceCommand/voicecommand.8.gz

@@ -184,7 +184,6 @@ if [ $option == "y" ] || [ $option == "Y" ] ; then
     sudo cp "$tmp" /usr/bin/
     sudo cp ../VoiceCommand/google /usr/bin/
     sudo cp ../VoiceCommand/tts /usr/bin/
-    sudo cp ../VoiceCommand/tts-nofill /usr/bin/
     sudo cp ../VoiceCommand/speech-recog.sh /usr/bin/
     sudo cp ../VoiceCommand/voicecommand.8.gz /usr/share/man/man8/
     if [ -z "$USER_HOME/.commands.conf" ] ; then
