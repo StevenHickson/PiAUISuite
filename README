@@ -27,11 +27,18 @@ gtextcommand:
     http://stevenhickson.blogspot.com/2013/03/controlling-raspberry-pi-via-text.html
 
 youtube:
-    Uses youtube-dl and other scripts to play youtube files.
+    Uses youtube-dl and other scripts to stream youtube files.
+    http://stevenhickson.blogspot.com/2013/06/playing-youtube-videos-in-browser-on.html
     http://stevenhickson.blogspot.com/2013/04/using-youtube-on-raspberry-pi-without.html
+
+youtube-safe:
+    Uses youtube-dl, get_flash_videos, and other scripts to stream other video files (The Daily Show, Hulu, etc.).
+    http://stevenhickson.blogspot.com/2013/06/getting-huluvimeo-to-work-on-raspberry.html
+    http://stevenhickson.blogspot.com/2013/06/streaming-other-hd-video-sites-on.html
 
 voicecommand:
     Uses googles api and a special config to run commands based on what you say.
+    http://stevenhickson.blogspot.com/2013/05/voice-command-v20-for-raspberry-pi.html
     http://stevenhickson.blogspot.com/2013/04/voice-control-on-raspberry-pi.html
 
 Copyright

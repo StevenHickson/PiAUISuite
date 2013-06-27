@@ -41,4 +41,4 @@ done
 wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "http://translate.google.com/translate_tts?tl=${lang}&q=$string"
 cat "/dev/shm/tmp.mp3" >> "/dev/shm/speak.mp3"
 #now we finally say the whole thing
-cat "/dev/shm/speak.mp3" | mpg123 - 1>/dev/null 2>/dev/null
+cat "/dev/shm/speak.mp3" | mpg123 - 1>/dev/shm/voice.log 2>/dev/shm/voice.log

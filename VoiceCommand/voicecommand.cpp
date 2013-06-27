@@ -6,7 +6,7 @@ using namespace boost;
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "l:d:D:psbcveiqt:k:r:f:h?";
+static const char *optString = "l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -35,7 +35,7 @@ inline float GetVolume(string recordHW, string com_duration, bool nullout) {
     run += com_duration;
     run += " -r 16000 /dev/shm/noise.wav";
     if(nullout)
-        run += " 1>/dev/null 2>/dev/null";
+        run += " 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log";
     system(run.c_str());
     cmd = popen("sox /dev/shm/noise.wav -n stats -s 16 2>&1 | awk '/^Max\\ level/ {print $3}'","r");
     fscanf(cmd,"%f",&vol);
@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
     //this is a really crude and terrible hack.
     //It makes it so that the config file doesn't overwrite the command line options
     //And it allows the config file to be set to something random
+    system("echo \"\" > /dev/shm/voice.log"); //lazily clear out the log file
     vc.CheckConfigParam(argc,argv);
     
     FILE *cmd = NULL;
@@ -77,7 +78,7 @@ int main(int argc, char* argv[]) {
             if(volume > vc.thresh) {
                 //printf("Found volume %f above thresh %f\n",volume,vc.thresh);
                 if(vc.verify) {
-                    system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>/dev/null 2>/dev/null");
+                    system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log");
                     cmd = popen(cont_com.c_str(),"r");
                     if(cmd == NULL)
                         printf("ERROR\n");
@@ -155,10 +156,16 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
     while( opt != -1 ) {
         switch( opt ) {
             case 'b':
-                filler = !filler;
+                if(optarg && !bool(atoi(optarg)))
+                    filler = false;
+                else
+                    filler = true;
                 break;
             case 'c':
-                continuous = !continuous;
+                if(optarg && !bool(atoi(optarg)))
+                    continuous = false;
+                else
+                    continuous = true;
                 break;
             case 'd':
                 duration = string(optarg);
@@ -169,16 +176,25 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'p':
                 passthrough = true;
             case 'v':
-                verify = !verify;
+                if(optarg && !bool(atoi(optarg)))
+                    verify = false;
+                else
+                    verify = true;
                 break;
             case 'e':
                 edit = true;
                 break;
             case 'i':
-                ignoreOthers = !ignoreOthers;
+                if(optarg && !bool(atoi(optarg)))
+                    ignoreOthers = false;
+                else
+                    ignoreOthers = true;
                 break;
             case 'q':
-                quiet = !quiet;
+                if(optarg && !bool(atoi(optarg)))
+                    quiet = false;
+                else
+                    quiet = true;
                 break;
             case 'l':
                 command_duration = string(optarg);
@@ -482,7 +498,7 @@ int VoiceCommand::Speak(string message) {
     }
 
     command += message;
-    command += "\" 2>/dev/null 1>/dev/null";
+    command += "\" 2>>/dev/shm/voice.log 1>>/dev/shm/voice.log";
     system(command.c_str());
 
     return 0;
