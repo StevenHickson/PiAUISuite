@@ -6,7 +6,7 @@ using namespace boost;
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
+static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"Not querying for answers\n");
     if(vc.edit) {
         vc.EditConfig();
-    } else if(vc.continuous) {
+    } else if(vc.continuous && vc.forced_input.empty()) {
         fprintf(stderr,"running in continuous mode\n");
         if(vc.verify)
             fprintf(stderr,"verifying command as well\n");
@@ -112,20 +112,23 @@ int main(int argc, char* argv[]) {
             }
         }
     } else {
-        //system("tts \"FILL Ready?\" 2>/dev/null 1>/dev/null");
-        string command = "speech-recog.sh";
-        if(vc.differentHW) {
-            command += " -D ";
-            command += vc.recordHW;
+        if(vc.forced_input.empty()) {
+            string command = "speech-recog.sh";
+            if(vc.differentHW) {
+                command += " -D ";
+                command += vc.recordHW;
+            }
+            command += " -d ";
+            command += vc.duration;
+            command += " -l ";
+            command += vc.lang;
+            cmd = popen(command.c_str(),"r");
+            fscanf(cmd,"\"%[^\"\n]\"\n",message);
+            vc.ProcessMessage(message);
+            fclose(cmd);
+        } else {
+            vc.ProcessMessage(vc.forced_input.c_str());
         }
-        command += " -d ";
-        command += vc.duration;
-        command += " -l ";
-        command += vc.lang;
-        cmd = popen(command.c_str(),"r");
-        fscanf(cmd,"\"%[^\"\n]\"\n",message);
-        vc.ProcessMessage(message);
-        fclose(cmd);
     }
 
     return 0;
@@ -157,9 +160,9 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
         switch( opt ) {
             case 'b':
                 if(optarg && !bool(atoi(optarg)))
-                    filler = false;
+                    filler = "\"";
                 else
-                    filler = true;
+                    filler = "\"FILLER FILL ";
                 break;
             case 'c':
                 if(optarg && !bool(atoi(optarg)))
@@ -175,6 +178,8 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 differentHW = true;
             case 'p':
                 passthrough = true;
+            case 'I':
+                forced_input = string(optarg);
             case 'v':
                 if(optarg && !bool(atoi(optarg)))
                     verify = false;
@@ -239,7 +244,7 @@ VoiceCommand::VoiceCommand() {
     response = "Yes sir?";
     lang="en";
     quiet = false;
-    filler = true;
+    filler = "\"FILLER FILL ";
     continuous = false;
     verify = false;
     edit = false;
@@ -247,7 +252,8 @@ VoiceCommand::VoiceCommand() {
     differentHW = false;
     passthrough = false;
     recordHW = "plughw:1,0";
-    api = "";
+    api.clear();
+    forced_input.clear();
     duration = DURATION_DEFAULT;
     command_duration = COM_DURATION_DEFAULT;
     maxResponse = -1;
@@ -265,7 +271,7 @@ VoiceCommand::~VoiceCommand() {
 }
 
 
-inline void VoiceCommand::ProcessMessage(char* message) {
+inline void VoiceCommand::ProcessMessage(const char* message) {
     unsigned int i = 0, loc = 0;
     string tmp = message;
     string sTmp = message;
@@ -386,8 +392,15 @@ void VoiceCommand::GetConfig() {
                 ignoreOthers = bool(atoi(line.substr(9).c_str()));
             if(tmp.compare("!thresh==") == 0)
                 thresh = atof(line.substr(9).c_str());
-            if(tmp.compare("!filler==") == 0)
-                filler = atof(line.substr(9).c_str());
+            if(tmp.compare("!filler==") == 0) {
+                filler = line.substr(9);
+                if(filler.compare("1") == 0)
+                    filler = "\"FILLER FILL ";
+                else if(filler.compare("0") == 0)
+                    filler = "\"";
+                else
+                    filler = "\"" + filler;
+            }
             tmp = line.substr(0,10);
             if(tmp.compare("!keyword==") == 0)
                 keyword = line.substr(10);
@@ -441,7 +454,7 @@ void VoiceCommand::EditConfig() {
     "This means that ~ arguments should probably be at the end.\n"
     "arguments with multiple variables like the play $1 season $2 episode $3 example should be before ones like play... because it will pick the first match\n"
     "You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n"
-    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==1,!api==BLANK,!maxResponse==-1,!lang==en,!hardware==plughw:1,0\n"
+    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==FILLER FILL,!api==BLANK,!maxResponse==-1,!lang==en,!hardware==plughw:1,0\n"
     "Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
@@ -486,16 +499,7 @@ int VoiceCommand::Speak(string message) {
 	    return 0;
     }
 
-    string command;
-    if (filler) {
-        command = "tts -l ";
-        command += lang;
-        command += " \"FILL ";
-    } else {
-        command = "tts-nofill -l";
-        command += lang;
-        command += " \"";
-    }
+    string command = "tts -l " + lang + " " + filler;
 
     command += message;
     command += "\" 2>>/dev/shm/voice.log 1>>/dev/shm/voice.log";
@@ -765,7 +769,7 @@ void VoiceCommand::Setup() {
     scanf("%s",buffer);
     if(buffer[0] == 'y') {
         printf("First I'm going to say something and see if you hear it\n");
-        system("tts \"FILL This program was created by Steven Hickson\"");
+        system("tts \"FILLER FILL This program was created by Steven Hickson\"");
         printf("Did you hear anything? (y/n)\n");
         scanf("%s",buffer);
         if(buffer[0] == 'n') {
@@ -773,11 +777,11 @@ void VoiceCommand::Setup() {
             printf("You might also want to change some alsa options using alsamixer and alsa force-reload\n");
             exit(-1);
         }
-        printf("\nIf you heard the word FILL (or FILLER or FILLER FILL) at the beginning of the sentence, the filler flag should be set to 0\n");
+        printf("\nIf you heard the word FILL (or FILLER or FILLER FILL) at the beginning of the sentence, the filler flag should be set to 0 or be blank\n");
         printf("Do you want me to permanently set the filler flag to 0? (y/n)\n");
         scanf("%s",buffer);
         if(buffer[0] == 'y') {
-            filler = false;
+            filler = "\"";
             write += "!filler==0\n";
         }
         printf("\nThe default response of the system after it finds the keyword is \"Yes Sir?\"\n");
@@ -789,11 +793,7 @@ void VoiceCommand::Setup() {
             while(change) {
                 printf("Type the phrase you want as the response:\n");
                 scanf("%s",buffer);
-                string cmd = "";
-                if(filler)
-                    cmd += "tts \"FILL ";
-                else
-                    cmd += "tts-nofill \"";
+                string cmd = "tts " + filler;
                 cmd += string(buffer);
                 cmd += "\"";
                 system(cmd.c_str());

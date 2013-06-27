@@ -3,18 +3,19 @@
 #we need a contacts folder, this will be obtained and updated using gvapi -i and will be in ~/.contacts
 
 function sendtext() {
+    local filler="FILLER FILL"
     local arrs=`echo "$1" | tr "==" "\n"`
     local count=1
     local okay=0
     while read -r x
     do
         if [ "$count" == 1 ] ; then
-            tts "FILL What would you like to text to $x"
+            tts "$filler What would you like to text to $x"
         elif [ "$count" == 3 ] ; then
             while [ $okay == 0 ]
             do
-                local message=`speech-recog.sh -d 10`
-                tts "FILL I got $message. Is this correct?"
+                local message=`speech-recog.sh -d 10 | tr -d '"'`
+                tts "$filler I got $message. Is this correct?"
                 yes=`speech-recog.sh`
                 if [[ "$yes" == *"yes"* ]] ; then
                     gvapi -n "$x" -m "$message"

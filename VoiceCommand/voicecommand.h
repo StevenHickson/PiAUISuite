@@ -36,7 +36,6 @@ public:
     bool verify;
     bool edit;
     bool ignoreOthers;
-    bool filler;
     bool quiet;
     bool differentHW;
     bool passthrough;
@@ -44,12 +43,14 @@ public:
     //I'm storing the durations as strings because it makes the commands less messy and requires less overhead
     string duration;
     string command_duration;
+    string filler;
     string recordHW;
     string keyword;
     string config_file;
     string response;
     string lang;
     string api;
+    string forced_input;
     int maxResponse;
     
     char errorbuf[CURL_ERROR_SIZE];
@@ -59,7 +60,7 @@ public:
     VoiceCommand();
     ~VoiceCommand();
     
-    inline void ProcessMessage(char* message);
+    inline void ProcessMessage(const char* message);
     void GetConfig();
     void EditConfig();
     void CheckConfig();

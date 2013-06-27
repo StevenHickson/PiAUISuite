@@ -1,5 +1,6 @@
 #!/bin/bash
 
+filler="FILLER FILL"
 #Message from: name says: message
 user=`cat $HOME/.misc | awk -F'username==' '{print $2}' | tr -d '\n'`
 pass=`cat $HOME/.misc | awk -F'password==' '{print $2}' | tr -d '\n'`
@@ -14,12 +15,12 @@ if [ "$texts" != "" ] ; then
         name=${name%says:*}
         message=${line#*says:}
         echo "message from $name"
-        tts "FILL message from $name"
+        tts "$filler message from $name"
         sleep 0.5
         echo "    $message"
-        tts "FILL $message"
+        tts "$filler $message"
     done 
 else
     echo "No messages"
-    tts "FILL no messages"
+    tts "$filler no messages"
 fi
