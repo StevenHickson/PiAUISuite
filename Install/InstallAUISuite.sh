@@ -28,7 +28,7 @@ function playvideo() {
     echo "Installing playvideo"
     echo "Enter movie/video root folder location, ex: /media/External/movies"
     read media_path
-    `../PlayVideoScripts/playvideo.sh -set "$media_path"`
+    `../PlayVideoScripts/playvideo -set "$media_path"`
     sudo cp ../PlayVideoScripts/playvideo /usr/bin/playvideo
     sudo cp ../PlayVideoScripts/playvideo.8.gz /usr/share/man/man8/
     echo "Done installing playvideo!"
