@@ -19,7 +19,7 @@ function dependencies() {
     fi
 }
 
-function playvideo() {
+function playvideo_install() {
     #Install playvideo script
     echo "Install playvideo? y/n"
     echo "This script indexes your movies and tv shows in order to quickly find, randomize, and/or play them. I find it extremely useful"
@@ -182,7 +182,7 @@ function youtube() {
     fi
 }
 
-function voicecommand() {
+function voicecommand_install() {
     DIR=$1
     USER_HOME="$2"
     echo "Install voicecommand? y/n"
@@ -235,7 +235,7 @@ ARG="$1"
 if [ "$ARG" == "dependencies" ] ; then 
     dependencies "$ARCH"
 elif [ "$ARG" == "playvideo" ] ; then 
-    playvideo
+    playvideo_install
 elif [ "$ARG" == "download" ] ; then 
     download "$DIR" "$USER_HOME"
 elif [ "$ARG" == "gtextcommand" ] ; then
@@ -245,13 +245,13 @@ elif [ "$ARG" == "gvapi" ] ; then
 elif [ "$ARG" == "youtube" ] ; then
     youtube "$DIR" "$USER_HOME"
 elif [ "$ARG" == "voicecommand" ] ; then
-    voicecommand "$DIR" "$USER_HOME"
+    voicecommand_install "$DIR" "$USER_HOME"
 else
     dependencies "$ARCH"
-    playvideo
+    playvideo_install
     download "$DIR" "$USER_HOME"
     gtextcommand "$DIR" "$USER_HOME"
     gvapi "$DIR" "$USER_HOME"
     youtube "$DIR" "$USER_HOME"
-    voicecommand "$DIR" "$USER_HOME"
+    voicecommand_install "$DIR" "$USER_HOME"
 fi
