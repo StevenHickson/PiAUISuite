@@ -320,6 +320,7 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
             if(regex_search(voice[i].c_str(), m, rexp)) {
                 //Found $ Initiating special options
                 int num_var = m.size() + 1;
+                //fprintf(stderr, "Found # %d $s, initiating special option\n", num_var);
                 string match = voice[i];
                 for(int j = 1; j <= num_var; j++) {
                     stringstream replace;
@@ -328,9 +329,10 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                     replace_all(match,replace.str(),"([^\t\n]+?)");
                 }
                 regex rexp2(match); cmatch n;
-                if(regex_search(message, n, rexp2)) {
+                if(regex_search(sTmp.c_str(), n, rexp2)) {
                     string run = commands[i];
                     for(int j = 0; j <= num_var; j++) {
+                        //fprintf(stderr, "Found %s, initiating special option stage2\n",string(n[0]).c_str());
                         stringstream replace;
                         replace << "$";
                         replace << j;
