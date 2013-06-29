@@ -329,10 +329,11 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                     replace_all(match,replace.str(),"([^\t\n]+?)");
                 }
                 regex rexp2(match); cmatch n;
+                //this line is the bug somehow (I think)
                 if(regex_search(sTmp.c_str(), n, rexp2)) {
                     string run = commands[i];
                     for(int j = 0; j <= num_var; j++) {
-                        //fprintf(stderr, "Found %s, initiating special option stage2\n",string(n[0]).c_str());
+                        //fprintf(stderr, "Found %s, initiating special option stage2\n",string(n[j]).c_str());
                         stringstream replace;
                         replace << "$";
                         replace << j;

@@ -9,6 +9,10 @@ voicecommand \- Listen to user defined strings and run the corresponding command
 voicecommand was developed for the Raspberry Pi but will work on any linux system with a microphone attached. It is a crude program, which uses basic comparisons to determine if your voicecommand fits a format specified in a config file; it it does, it runs the corresponding linux command. It supports auto-completion and variables as well as command verification, a continuous mode, and other options.
 For help/comments/questions, feel free to e-mail me at me@stevenhickson.com. I answer sporadically but do eventually respond.
 .PP
+
+.TP
+Note: All of the flags that turn something on are off can be reversed and overwritten by following it with a 1 or 0. So for instance if you have !continuous==1 in your config file, you can run voicecommand -c0 to turn continuous off.
+
 .SH OPTIONS
 .TP
 .I "?"
@@ -48,9 +52,9 @@ This means that if you say "play Futurama", it will run the command playvideo Fu
 .br
 You can use $# (where # is any number 1 to 9) to represent a variable. These should go in order from 1 to 9
 .br
-.I  "Ex: play $1 season $2 episode $3==playvideo -s $2 -e $3 $1"
+.I  "Ex: $1 season $2 episode $3==playvideo -s $2 -e $3 $1"
 .br
-This means if you say play game of thrones season 1 episode 2, it will run playvideo with the -s flag as 1, the -e flag as 2, and the main argument as game of thrones, i.e. playvideo -s 1 -e 2 game of thrones
+This means if you say game of thrones season 1 episode 2, it will run playvideo with the -s flag as 1, the -e flag as 2, and the main argument as game of thrones, i.e. playvideo -s 1 -e 2 game of thrones
 .br
 Because of these options, it is important that the arguments range from most strict to least strict.
 .br
@@ -60,11 +64,15 @@ You can also put comments if the line starts with # and special options if the l
 .br
 Default options are shown as follows:
 .br
-.I "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh==0.7,!filler==1,"
+.I "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh==0.7,!maxResponse==-1"
 .br
-.I "!response==Yes Sir?,!duration==3,!com_dur==2,!hardware==plughw:1,0"
+.I "api==BLANK,!filler==FILLER FILL,!response==Yes Sir?,!duration==3,!com_dur==2,!hardware==plughw:1,0,!language==en_us"
 .br
-Keyword and response accept strings. verify, continuous, quiet, and ignore except 1 or 0 (true or false respectively). thresh excepts a floating point number. These allow you to set some of the flags as permanent options (If these are set, they overwrite the flag options).
+Keyword, filler, and response accept strings. verify, continuous, quiet, and ignore except 1 or 0 (true or false respectively). thresh excepts a floating point number. These allow you to set some of the flags as permanent options (If these are set, you can overwrite them with the flag options).
+.br
+You can set a WolframAlpha API and maxResponse (the number of branches) like !api==XXXXXX-XXXXXXXXXX amd !maxResponse==3
+.br
+You can now customize the language support for speech recognition and some text to speech with the language flag. Look up your country code and use that. Ex. For US: !language==en_us, for Spain !language==es, for Germany !language==de.
 
 .TP
 .I "-f /my-location/config-file"
@@ -79,6 +87,10 @@ Shows this man page.
 .TP
 .I "-i"
 Sets the ignore mode. When this flag is activated, if a command is not in the config file, nothing happens. The default behavior is to try to find an answer or response to that question and then speak it. This turns off that behavior.
+
+.TP
+.I "-I string"
+Sets the forced input mode. This allows you to test it without the microphone or get it to parse typed information. It will not run in continuous mode with this.
 
 .TP
 .I "-k word"
@@ -108,7 +120,7 @@ Sets the threshold for volume to determine if the keyword was spoken. This shoul
 
 .TP
 .I "-p"
-Sets passthrough mode on so that instead of running the commands, it just prints them. This is going to be used for the XBMC plugin.
+Sets passthrough mode on so that instead of running the commands, it just prints them. This is going to be used for the XBMC plugin and Android app.
 
 .TP
 .I "-q"
