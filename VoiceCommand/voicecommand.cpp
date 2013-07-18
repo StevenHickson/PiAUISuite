@@ -385,6 +385,9 @@ void VoiceCommand::GetConfig() {
             string tmp = line.substr(0,6);
             if(tmp.compare("!api==") == 0)
                 api = line.substr(6);
+            tmp = line.substr(0,7);
+            if(tmp.compare("!lang==") == 0)
+                lang = line.substr(7);
             tmp = line.substr(0,8);
             if(tmp.compare("!quiet==") == 0)
                 quiet = bool(atoi(line.substr(8).c_str()));

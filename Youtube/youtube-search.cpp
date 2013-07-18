@@ -63,7 +63,7 @@ int Youtube::Search(string query, string *link, bool verify) {
         return -1;
     }
 
-    string search = "https://www.youtube.com/results?search_query=";
+    string search = "http://www.youtube.com/results?search_query=";
     search += query;
     curl_easy_setopt(hcurl, CURLOPT_URL, search.c_str());
     curlbuf.clear();
@@ -77,7 +77,7 @@ int Youtube::Search(string query, string *link, bool verify) {
 
     regex rexp("\"/watch\\?([a-z0-9A-Z=]+)\" class"); cmatch m;
     if (regex_search(curlbuf.c_str(), m, rexp)) {
-        string t = "https://youtube.com/watch?";
+        string t = "http://youtube.com/watch?";
         t += string(m[1]);
         if (verify)
             printf("%s\n", t.c_str());
