@@ -824,7 +824,7 @@ void VoiceCommand::Setup() {
         int card = -1,device = -1;
         cmd = popen("arecord -l | awk '/^card [0-9]/ {print $2}'","r");
         fscanf(cmd, "%d:",&card);
-        cmd = popen("arecord -l | awk '/device [0-9]/ {print $2}'","r");
+        cmd = popen("arecord -l | grep -o 'device [0-9]:' | grep -o  '[0-9]:'","r");
         fscanf(cmd, "%d:",&device);
         if(card == -1 || device == -1) {
             printf("I couldn't find a hardware device. You don't have a valid microphone\n");
