@@ -121,7 +121,7 @@ int GoogleVoice::CallNumber(string to, string from) {
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() error on marking sms as read: " << errorbuf << endl; return -3;}
 
-    return 0
+    return 0;
 }
 
 int GoogleVoice::CheckSMS(string &results, string number, string keyword, bool delete_sms)

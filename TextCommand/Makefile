@@ -3,7 +3,7 @@ BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 #Set Architecture
 ARCH := arm
 DEVEL := rel
-LIBS := -lcurl -lboost 
+LIBS := -lcurl -lboost_regex 
 
 #Compilers
 ifeq ($(ARCH),arm)

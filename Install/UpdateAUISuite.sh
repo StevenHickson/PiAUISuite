@@ -52,6 +52,8 @@ if [ -e "/usr/bin/youtube" ] ; then
     chmod +x /usr/bin/youtube-safe
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-dlfast
     chmod +x /usr/bin/youtube-dlfast
+    wget -N -P /etc/cron.daily/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/update-youtubedl
+    chmod +x /etc/cron.daily/update-youtubedl
     tmp="$ROOT_DIR/Youtube/"
     tmp+="$DIR"
     tmp+="youtube-search"
