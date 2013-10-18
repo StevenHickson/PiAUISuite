@@ -242,6 +242,7 @@ VoiceCommand::VoiceCommand() {
     thresh = 0.7f;
     keyword = "pi";
     response = "Yes sir?";
+    improper = "Received improper command";
     lang="en";
     quiet = false;
     filler = "\"FILLER FILL ";
@@ -351,9 +352,10 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
         }
         ++i;
     }
+    string improper_tmp = improper + ": " + message + "\n";
     if(ignoreOthers) {
-        fprintf(stderr,"Received improper command: %s\n",message);
-        Speak("Received improper command");
+        fprintf(stderr,improper_tmp.c_str());
+        Speak(improper);
         return;
     }
     string checkit = string(message);
@@ -381,7 +383,7 @@ void VoiceCommand::GetConfig() {
         unsigned int loc = line.find("==");
         if(line[0] == '!') {
             //This is a special config option
-            //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word.
+            //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word improper==word.
             string tmp = line.substr(0,6);
             if(tmp.compare("!api==") == 0)
                 api = line.substr(6);
@@ -415,6 +417,8 @@ void VoiceCommand::GetConfig() {
             tmp = line.substr(0,11);
             if(tmp.compare("!response==") == 0)
                 response = line.substr(11);
+            if(tmp.compare("!improper==") == 0)
+                improper = line.substr(11);
             if(tmp.compare("!hardware==") == 0) {
                 recordHW = line.substr(11);
                 differentHW = true;
@@ -460,7 +464,8 @@ void VoiceCommand::EditConfig() {
     "This means that ~ arguments should probably be at the end.\n"
     "arguments with multiple variables like the play $1 season $2 episode $3 example should be before ones like play... because it will pick the first match\n"
     "You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n"
-    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?,!duration==3,!com_dur==2,!filler==FILLER FILL,!api==BLANK,!maxResponse==-1,!lang==en,!hardware==plughw:1,0\n"
+    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?, !improper=Received improper command:,!duration==3,!com_dur==2,!filler==FILLER FILL,!api==BLANK,!maxResponse==-1,"
+    "!lang==en,!hardware==plughw:1,0\n"
     "Press any key to continue\n");
     getchar();
     string edit_command = "nano ";
@@ -717,6 +722,7 @@ int kbhit (void)
 void VoiceCommand::Setup() {
     //Function in order to detect your default options.
     //It will then set these automatically in the config file.
+    bool change=false;
     char buffer[100];
     string write = "";
     printf("Do you want to permanently set the continuous flag so that it always runs continuously? (y/n)\n");
@@ -790,16 +796,17 @@ void VoiceCommand::Setup() {
             filler = "\"";
             write += "!filler==0\n";
         }
+        string cmd;
         printf("\nThe default response of the system after it finds the keyword is \"Yes Sir?\"\n");
         printf("Do you want to change the response? (y/n)\n");
-        bool change = false;
+        change = false;
         scanf("%s",buffer);
         if(buffer[0] == 'y') {
             change = true;
             while(change) {
                 printf("Type the phrase you want as the response:\n");
                 scanf("%s",buffer);
-                string cmd = "tts " + filler;
+                cmd = "tts " + filler;
                 cmd += string(buffer);
                 cmd += "\"";
                 system(cmd.c_str());
@@ -811,6 +818,29 @@ void VoiceCommand::Setup() {
             }
             write += "!response==";
             write += response;
+            write += "\n";
+        }
+        printf("\nThe default response of the system after it receives an unknown command is \"Received improper command:\"\n");
+        printf("Do you want to change the response? (y/n)\n");
+        change = false;
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            change = true;
+            while(change) {
+                printf("Type the phrase you want as the 'command not found' response:\n");
+                scanf("%s",buffer);
+                cmd = "tts " + filler;
+                cmd += string(buffer);
+                cmd += "\"";
+                system(cmd.c_str());
+                improper = string(buffer);
+                printf("Did that sound correct? (y/n)\n");
+                scanf("%s",buffer);
+                if(buffer[0] == 'y')
+                    change = false;
+            }
+            write += "!improper==";
+            write += improper;
             write += "\n";
         }
     }
@@ -875,7 +905,7 @@ void VoiceCommand::Setup() {
         }
         printf("\nThe default keyword of the system is \"pi\"\n");
         printf("Do you want to change the keyword? (y/n)\n");
-        bool change = false;
+        change = false;
         scanf("%s",buffer);
         if(buffer[0] == 'y') {
             change = true;
