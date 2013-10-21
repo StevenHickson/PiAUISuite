@@ -48,6 +48,7 @@ public:
     string keyword;
     string config_file;
     string response;
+    string improper;
     string lang;
     string api;
     string forced_input;
