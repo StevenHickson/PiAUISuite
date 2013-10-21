@@ -140,7 +140,7 @@ function gtextcommand {
     #
     # cron script to check google voice.
     #
-    # Written by Steven Hickson <me@stevenhickson.com> for the gtextcommand script.
+    # Written by Steven Hickson <help@stevenhickson.com> for the gtextcommand script.
     #
     DISPLAY=:0
 
@@ -214,7 +214,7 @@ function voicecommand_install() {
 }
 
 echo "Installing AUI Suite by Steven Hickson"
-echo "If you have issues, visit stevenhickson.blogspot.com or email me@stevenhickson.com"
+echo "If you have issues, visit stevenhickson.blogspot.com or email help@stevenhickson.com"
 
 #Get architecture
 ARCH=`uname -m`

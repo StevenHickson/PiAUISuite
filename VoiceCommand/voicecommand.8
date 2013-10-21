@@ -1,5 +1,5 @@
 .\" Manpage for playvideo.
-.\" Contact me@stevenhickson to add input or correct errors or typos.
+.\" Contact help@stevenhickson to add input or correct errors or typos.
 .TH man 8 "13 May 2013" "2.0" "voicecommand man page"
 .SH NAME
 voicecommand \- Listen to user defined strings and run the corresponding command
@@ -7,7 +7,7 @@ voicecommand \- Listen to user defined strings and run the corresponding command
 .I "voicecommand [OPTIONS]..."
 .SH DESCRIPTION
 voicecommand was developed for the Raspberry Pi but will work on any linux system with a microphone attached. It is a crude program, which uses basic comparisons to determine if your voicecommand fits a format specified in a config file; it it does, it runs the corresponding linux command. It supports auto-completion and variables as well as command verification, a continuous mode, and other options.
-For help/comments/questions, feel free to e-mail me at me@stevenhickson.com. I answer sporadically but do eventually respond.
+For help/comments/questions, feel free to e-mail me at help@stevenhickson.com. I answer sporadically but do eventually respond.
 .PP
 
 .TP
@@ -131,9 +131,9 @@ Sets quiet mode on so that voicecommand never speaks through the audio output. I
 Makes voicecommand verify the keyword. This only happens in continuous mode so if this flag is set, the continuous flag will be set as well. The default mode is to not verify. When voicecommand hears any sound above the threshold, it says the response then listens for a command. The default keyword is pi. When the verify flag is set, after the threshold is met, voicecommand verifies that the keyword was spoken. 
 
 .SH AUTHOR
-.I "Steven Hickson (me@stevenhickson.com)"
+.I "Steven Hickson (help@stevenhickson.com)"
 .SH BUGS
-No known bugs. To report bugs, send a clear description to me@stevenhickson.com
+No known bugs. To report bugs, send a clear description to help@stevenhickson.com
 Since this program is fairly crude, user typos could cause crashes/failed responses. Please read the man page thoroughly before submitting a bug.
 .SH COPYRIGHT
 Copyright ©  2013 Steven Hickson. License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.

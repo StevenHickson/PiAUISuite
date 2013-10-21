@@ -45,7 +45,7 @@ do
         #
         # cron script to save a update local database.
         #
-        # Written by Steven Hickson <me@stevenhickson.com> for the playvideo project.
+        # Written by Steven Hickson <help@stevenhickson.com> for the playvideo project.
         #
 		updatedb --localpaths=$var --output=$HOME/.media.db" 
         echo "$cronjob" | sudo tee -a /etc/cron.daily/updatelocaldb >/dev/null
