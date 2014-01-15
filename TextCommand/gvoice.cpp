@@ -239,14 +239,15 @@ int GoogleVoice::Login()
 	string post, galx;
 
 	// Get GLAX token.
-	curl_easy_setopt(hcurl, CURLOPT_URL, "https://accounts.google.com/ServiceLogin?passive=true&service=grandcentral");
+	curl_easy_setopt(hcurl, CURLOPT_URL, "https://accounts.google.com/ServiceLogin?service=grandcentral");
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() Error: " << errorbuf << endl; return -1;}
 
-	rexp = "name=\"GALX\"\\s*value=\"([^\"]+)\"";
+	rexp = "name=\"GALX\"\\s*type=\"hidden\"([\\s\\n\\t]*)value=\"([^\"]+)\"";
 	if(regex_search(curlbuf.c_str(), m, rexp)) 
 	{ 
-		galx=m[1];
+        //cout << "Options are: " << m[0] << ", " << m[1] << ", " << m[2] << endl;
+		galx=m[2];
 		if(debug&1) cout << "Got GALX session token: " << galx << endl;
 
 	} else {cout << "Failed to find GALX token.\n"; return -2;}
@@ -256,21 +257,24 @@ int GoogleVoice::Login()
 	curl_easy_setopt(hcurl, CURLOPT_POST, 1);
     post  = "Email="+email;
 	post += "&Passwd="+passwd;
-	post += "&continue=https://www.google.com/voice/account/signin";
-	post += "&service=grandcentral&GALX="+galx;
+    //post += "&PersistantCookie=yes";
+    //post += "&bgresponse=js_disabled";
+	post += "&continue=https://www.google.com/voice/b/0/";
+	post += "&GALX="+galx;
 	curl_easy_setopt(hcurl, CURLOPT_POSTFIELDS, post.c_str());	// TODO: check this and make sure it doesnt hold on to passed data ptr.
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() Error: " << errorbuf << endl; return -3;}
 
+	if(debug&2) cout << "\nLogin() curlbuf: [" << curlbuf << "]\n";
+
     //specifically for contacts    
     contact_buf = curlbuf;
 
-	if(debug&2) cout << "\nLogin() curlbuf: [" << curlbuf << "]\n";
-
-	rexp = "name=\"_rnr_se\".*?value=\"(.*?)\"";
+	rexp = "name=\"_rnr_se\"\\s*type=\"hidden\"([\\s\\n\\t]*)value=\"([^\"]+)\"";
 	if(regex_search(curlbuf.c_str(), m, rexp)) 
 	{ 
-		rnr_se=m[1]; loggedin=1;
+        //cout << "Options are: " << m[0] << ", " << m[1] << ", " << m[2] << endl;
+		rnr_se=m[2]; loggedin=1;
 		if(debug&1) cout << "Got rnr_se session token: " << rnr_se << endl;
 	}
 	else
