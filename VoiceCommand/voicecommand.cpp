@@ -59,6 +59,17 @@ int main(int argc, char* argv[]) {
     //command line options after the config options
     vc.CheckCmdLineParam(argc,argv);
     //vc.CheckConfig();
+    if(!vc.pid_file.empty()) {
+        FILE *out;
+        out = fopen(vc.pid_file.c_str(),"w");
+        if(out == NULL)
+            printf("Can not write to pid file: %s\n",vc.pid_file.c_str());
+        else {
+            fprintf(out,"%d",getpid());
+            fclose(out);
+            printf("Wrote pid file\n");
+        }
+    }
     if(vc.quiet)
         fprintf(stderr,"running in quiet mode\n");
     if(vc.ignoreOthers)
@@ -253,6 +264,7 @@ VoiceCommand::VoiceCommand() {
     differentHW = false;
     passthrough = false;
     recordHW = "plughw:1,0";
+    pid_file.clear();
     api.clear();
     forced_input.clear();
     duration = DURATION_DEFAULT;
@@ -414,6 +426,8 @@ void VoiceCommand::GetConfig() {
                 keyword = line.substr(10);
             if(tmp.compare("!com_dur==") == 0)
                 command_duration = line.substr(10);
+            if(tmp.compare("!pidfile==") == 0)
+                pid_file = line.substr(10);
             tmp = line.substr(0,11);
             if(tmp.compare("!response==") == 0)
                 response = line.substr(11);

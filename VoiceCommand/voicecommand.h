@@ -52,6 +52,7 @@ public:
     string lang;
     string api;
     string forced_input;
+    string pid_file;
     int maxResponse;
     
     char errorbuf[CURL_ERROR_SIZE];
