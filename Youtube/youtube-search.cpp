@@ -96,7 +96,7 @@ int Youtube::PlayVideo(string video, bool verify) {
         Init();
     FILE *pf;
     //This seems like a lot of space to use to format the string but it keeps it well organized for me
-    string command = "youtube ";
+    string command = "youtube-safe ";
     command += "\"";
     command += video;
     command += "\"";
