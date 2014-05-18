@@ -198,8 +198,11 @@ function voicecommand_install() {
         sudo cp ../VoiceCommand/tts /usr/bin/
         sudo cp ../VoiceCommand/speech-recog.sh /usr/bin/
         sudo cp ../VoiceCommand/voicecommand.8.gz /usr/share/man/man8/
-        if [ -z "$USER_HOME/.commands.conf" ] ; then
+        if [[ ! -f "$USER_HOME/.commands.conf" ]] ; then
+	    echo "No commands found, using default"
             cp ../VoiceCommand/commands.conf "$USER_HOME/.commands.conf"
+	else
+	    echo "I found a command file"
         fi
         echo "Would you like voicecommand to try to set itself up? y/n"
         read option

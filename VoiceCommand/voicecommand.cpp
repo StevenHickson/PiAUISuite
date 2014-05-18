@@ -21,7 +21,7 @@ inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     command += " -l ";
     command += vc.lang;
     cmd = popen(command.c_str(),"r");
-    fscanf(cmd,"\"%[^\"\n]\"\n",message);
+    fscanf(cmd,"\"%[^\"\n]\"",message);
     vc.ProcessMessage(message);
     fclose(cmd);
 }
@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
-        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" http://www.google.com/speech-api/v1/recognize?lang=" + vc.lang + " | sed -e 's/[{}]/''/g'| awk -v k=\"text\" '{n=split($0,a,\",\"); for (i=1; i<=n; i++) print a[i]; exit }' | awk -F: 'NR==3 { print $3; exit }'";
+        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" \"https://www.google.com/speech-api/v2/recognize?output=json&lang=en-us&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw\" | sed -e 's/[{}]/''/g' | awk -F\":\" '{print $4}' | awk -F\",\" '{print $1}' | tr -d '\\n'";
+
         while(vc.continuous) {
             volume = GetVolume(vc.recordHW, vc.command_duration, true);
             if(volume > vc.thresh) {
@@ -93,9 +94,9 @@ int main(int argc, char* argv[]) {
                     cmd = popen(cont_com.c_str(),"r");
                     if(cmd == NULL)
                         printf("ERROR\n");
-                    fscanf(cmd,"\"%[^\"\n]\"\n",message);
+                    fscanf(cmd,"\"%[^\"\n]\"",message);
                     fclose(cmd);
-                    //system("rm -fr /dev/shm/noise.*");
+                    system("rm -fr /dev/shm/noise.*");
                     //printf("message: %s, keyword: %s\n", message, vc.keyword.c_str());
                     if(iequals(message,vc.keyword.c_str())) {
                         message[0] = '\0'; //this will clear the first bit
@@ -134,7 +135,7 @@ int main(int argc, char* argv[]) {
             command += " -l ";
             command += vc.lang;
             cmd = popen(command.c_str(),"r");
-            fscanf(cmd,"\"%[^\"\n]\"\n",message);
+            fscanf(cmd,"\"%[^\"\n]\"",message);
             vc.ProcessMessage(message);
             fclose(cmd);
         } else {
@@ -315,20 +316,21 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
             }
             return;
         } else if( voice[i][0] == '~' ) {
-			// see whether the voice keyword is *anywhere* in the message
-			string v = voice[i].substr(1, string::npos);
-			loc = sTmp.find(v);
-			if( loc != string::npos ) {				
-				// if it does, return
+	    // see whether the voice keyword is *anywhere* in the message
+	    string v = voice[i].substr(1, string::npos);
+	    loc = sTmp.find(v);
+	    //printf("v: %s\tloc: %d\tsTmp: %s\n",v.c_str(),loc,sTmp.c_str());
+	    if( loc != string::npos && loc != -1) {				
+	        // if it does, return
                 if(passthrough)
                     printf("%s",commands[i].c_str());
                 else {
-				    printf("command: %s\n",commands[i].c_str());
-				    system(commands[i].c_str());
+	            printf("command: %s\n",commands[i].c_str());
+		    system(commands[i].c_str());
                 }
-				return;
-			}				
-		} else {
+		return;
+	    }				
+	} else {
             regex rexp("\\$(\\d+)"); cmatch m;
             if(regex_search(voice[i].c_str(), m, rexp)) {
                 //Found $ Initiating special options
