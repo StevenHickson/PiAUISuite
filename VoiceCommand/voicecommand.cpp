@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,"keyword duration is %s and duration is %s\n",vc.command_duration.c_str(),vc.duration.c_str());
         float volume = 0.0f;
         changemode(1);
-        string cont_com = "wget -O - -o /dev/null --post-file /dev/shm/noise.flac --header=\"Content-Type: audio/x-flac; rate=16000\" \"https://www.google.com/speech-api/v2/recognize?output=json&lang=en-us&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw\" | sed -e 's/[{}]/''/g' | awk -F\":\" '{print $4}' | awk -F\",\" '{print $1}' | tr -d '\\n'";
+        string cont_com = "curl -X POST --data-binary @/dev/shm/noise.flac --user-agent 'Mozilla/5.0' --header 'Content-Type: audio/x-flac; rate=16000;' 'https://www.google.com/speech-api/v2/recognize?output=json&lang=" + vc.lang + "&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&client=Mozilla/5.0' | sed -e 's/[{}]/''/g' | awk -F\":\" '{print $4}' | awk -F\",\" '{print $1}' | tr -d '\\n'";
 
         while(vc.continuous) {
             volume = GetVolume(vc.recordHW, vc.command_duration, true);
