@@ -46,10 +46,11 @@ fi
 function youtube() {
 if [ -e "/usr/bin/youtube" ] ; then
     echo "Updating youtube ..."
-    wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube
-    chmod +x /usr/bin/youtube
+    #wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube
+    #chmod +x /usr/bin/youtube
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-safe
     chmod +x /usr/bin/youtube-safe
+    ln -s /usr/bin/youtube-safe /usr/bin/youtube
     wget -N -P /usr/bin/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/youtube-dlfast
     chmod +x /usr/bin/youtube-dlfast
     wget -N -P /etc/cron.daily/ https://raw.github.com/StevenHickson/PiAUISuite/master/Youtube/update-youtubedl
