@@ -20,7 +20,14 @@ else
 
     #check to see if fifo exists (if this is really big, I'll have to move it out of /dev/shm.
     BUFFER_TIME=5
-    STREAM_FIFO="/dev/shm/temp.stream"
+    
+    #check where shm is located
+    if [ -d "/run/shm" ]; then
+        STREAM_FIFO="/run/shm/temp.stream"
+    else
+        STREAM_FIFO="/dev/shm/temp.stream"
+    fi
+    
     if [ ! -e $STREAM_FIFO ]; then
         mkfifo $STREAM_FIFO
     fi
