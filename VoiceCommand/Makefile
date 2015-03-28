@@ -4,11 +4,11 @@ BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 #Set Architecture
 ARCH := arm
 DEVEL := rel
-LIBS := -lcurl -lboost_regex
+LIBS := -lcurl -lboost_regex -lboost_system -lboost_thread
 
 #Compilers
 ifeq ($(ARCH),arm)
-CC := g++ -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
+CC := g++ -O4 -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
 else
 ifeq ($(ARCH),x86)
 CC := g++ -m32
