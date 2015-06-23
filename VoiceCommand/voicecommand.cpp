@@ -6,10 +6,21 @@ using namespace boost;
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
+static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:S:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
+    if(vc.has_setup_command) {
+        printf("starting setup_command\n");
+        string command = vc.setup_command.c_str();
+        printf("set the string\n");
+        cmd = popen(command.c_str(),"r");
+        printf("cmd-handle opened\n");
+        fscanf(cmd,"\"%[^\"\n]\"",message);
+        printf("fscanf finished\n");
+        fclose(cmd);
+        printf("ending setup_command\n");
+    }
     vc.Speak(vc.response);
     string command = "speech-recog.sh";
     if(vc.differentHW) {
@@ -72,6 +83,8 @@ int main(int argc, char* argv[]) {
     }
     if(vc.quiet)
         fprintf(stderr,"running in quiet mode\n");
+    if(vc.has_setup_command)
+        fprintf(stderr,"running with \"%s\" as a setup_command\n",vc.setup_command.c_str());
     if(vc.ignoreOthers)
         fprintf(stderr,"Not querying for answers\n");
     if(vc.edit) {
@@ -227,6 +240,10 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 verify = true;
                 keyword = string(optarg);
                 break;
+            case 'S':
+                setup_command = string(optarg);
+                has_setup_command = true;
+                break;
             case 'r':
                 response = string(optarg);
                 break;
@@ -254,6 +271,8 @@ VoiceCommand::VoiceCommand() {
     thresh = 0.7f;
     keyword = "pi";
     response = "Yes sir?";
+    setup_command = "";
+    has_setup_command = false;
     improper = "Received improper command";
     lang="en";
     quiet = false;
@@ -384,7 +403,7 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
 }
 
 void VoiceCommand::GetConfig() {
-    fprintf(stderr,"Opening config file...\n");
+    fprintf(stderr,"Opening confarg file...\n");
     ifstream file(config_file.c_str(),ios::in);
     if(!file.is_open()) {
         printf("Can't find config file!\nI'll make one.\n");
@@ -397,7 +416,7 @@ void VoiceCommand::GetConfig() {
         unsigned int loc = line.find("==");
         if(line[0] == '!') {
             //This is a special config option
-            //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word improper==word.
+            //Valid options are keyword==word,continuous==#,verify==#,ignore==#,quiet==#,thresh==#f,response==word,setup_command==word improper==word.
             string tmp = line.substr(0,6);
             if(tmp.compare("!api==") == 0)
                 api = line.substr(6);
@@ -430,7 +449,7 @@ void VoiceCommand::GetConfig() {
                 command_duration = line.substr(10);
             if(tmp.compare("!pidfile==") == 0)
                 pid_file = line.substr(10);
-            tmp = line.substr(0,11);
+                tmp = line.substr(0,11);
             if(tmp.compare("!response==") == 0)
                 response = line.substr(11);
             if(tmp.compare("!improper==") == 0)
@@ -443,6 +462,11 @@ void VoiceCommand::GetConfig() {
                 lang = line.substr(11);
             if(tmp.compare("!duration==") == 0)
                 duration = line.substr(11);
+            tmp = line.substr(0,16);
+            if(tmp.compare("!setup_command==") == 0) {
+                setup_command = line.substr(16);
+                has_setup_command = true;
+            }
             tmp = line.substr(0,13);
             if(tmp.compare("!continuous==") == 0)
                 continuous = bool(atoi(line.substr(13).c_str()));
@@ -480,7 +504,7 @@ void VoiceCommand::EditConfig() {
     "This means that ~ arguments should probably be at the end.\n"
     "arguments with multiple variables like the play $1 season $2 episode $3 example should be before ones like play... because it will pick the first match\n"
     "You can also put comments if the line starts with # and options if the line starts with a !\nDefault options are shown as follows:\n"
-    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?, !improper=Received improper command:,!duration==3,!com_dur==2,!filler==FILLER FILL,!api==BLANK,!maxResponse==-1,"
+    "!keyword==pi,!verify==1,!continuous==1,!quiet==0,!ignore==0,!thresh=0.7,!response=Yes sir?, !setup_command=BLANK, !improper=Received improper command:,!duration==3,!com_dur==2,!filler==FILLER FILL,!api==BLANK,!maxResponse==-1,"
     "!lang==en,!hardware==plughw:1,0\n"
     "Press any key to continue\n");
     getchar();
@@ -834,6 +858,27 @@ void VoiceCommand::Setup() {
             }
             write += "!response==";
             write += response;
+            write += "\n";
+        }
+        printf("\nThe default command to run before listeing for a response is nothing\"\n");
+        printf("Do you want to change the setup command? (y/n)\n");
+        change = false;
+        scanf("%s",buffer);
+        if(buffer[0] == 'y') {
+            change = true;
+            while(change) {
+                printf("Type the command you want run to set it up:\n");
+                scanf("%s",buffer);
+                cmd += "\"";
+                system(cmd.c_str());
+                setup_command = string(buffer);
+                printf("Did that sound correct? (y/n)\n");
+                scanf("%s",buffer);
+                if(buffer[0] == 'y')
+                    change = false;
+            }
+            write += "!setup_command==";
+            write += setup_command;
             write += "\n";
         }
         printf("\nThe default response of the system after it receives an unknown command is \"Received improper command:\"\n");

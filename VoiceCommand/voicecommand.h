@@ -38,6 +38,7 @@ public:
     bool ignoreOthers;
     bool quiet;
     bool differentHW;
+    bool has_setup_command;
     bool passthrough;
     float thresh;
     //I'm storing the durations as strings because it makes the commands less messy and requires less overhead
@@ -48,6 +49,7 @@ public:
     string keyword;
     string config_file;
     string response;
+    string setup_command;
     string improper;
     string lang;
     string api;
