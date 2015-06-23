@@ -11,15 +11,10 @@ static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:S:f:h?";
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
     if(vc.has_setup_command) {
-        printf("starting setup_command\n");
         string command = vc.setup_command.c_str();
-        printf("set the string\n");
         cmd = popen(command.c_str(),"r");
-        printf("cmd-handle opened\n");
         fscanf(cmd,"\"%[^\"\n]\"",message);
-        printf("fscanf finished\n");
         fclose(cmd);
-        printf("ending setup_command\n");
     }
     vc.Speak(vc.response);
     string command = "speech-recog.sh";
