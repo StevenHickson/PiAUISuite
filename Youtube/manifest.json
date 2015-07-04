@@ -1,0 +1,18 @@
+{
+    "manifest_version": 2,
+    "content_scripts": [ {
+        "exclude_globs":    [  ],
+        "include_globs":    [ "*" ],
+        "js":               [ "yt.js",
+                              "ytb.js"
+                            ],
+        "matches":          ["http://*/*",
+                             "https://*/*"
+                            ],
+        "run_at": "document_end"
+    } ],
+    "converted_from_user_script": true,
+    "description":  "YouTube replace video script!",
+    "name":         "ReplaceVideo",
+    "version":      "1"
+}

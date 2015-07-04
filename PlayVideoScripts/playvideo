@@ -10,12 +10,14 @@ play_mult_bool=0
 play_first=0
 continue_bool=0
 continue_set=0
+list_bool=0
+list_set=0
 
 if [ -z $DISPLAY ] ; then
-    run_command="omxplayer -r -o hdmi"
+    run_command="omxplayer -r"
 else
     echo "Running xterm"
-    run_command="xterm -fullscreen -bg black -fg black -e omxplayer -r -o hdmi"
+    run_command="xterm -fullscreen -bg black -fg black -e omxplayer -r"
 fi
 
 for var in "$@"
@@ -57,6 +59,8 @@ do
 		random_bool=1	
 	elif [ "$var" == "-c" ] || [ "$var" == "-continue" ] ; then
 		continue_bool=1	
+	elif [ "$var" == "-l" ] || [ "$var" == "-list" ] ; then
+		list_bool=1	
 	elif [ "$var" == "-Season" ] || [ "$var" == "-S" ] || [ "$var" == "-season" ] || [ "$var" == "-s" ] ; then 
 		season_bool=1
 	elif [ "$var" == "-Episode" ] || [ "$var" == "-E" ] || [ "$var" == "-episode" ] || [ "$var" == "-e" ] ; then
@@ -64,6 +68,9 @@ do
 	elif [ $continue_bool == 1 ] ; then
 		continue_bool=0
 		continue_set="$var"
+	elif [ $list_bool == 1 ] ; then
+		list_bool=0
+		list_set="$var"
 	elif [ $season_bool == 1 ] ; then
 		season_bool=0
 		season_set="$var"
@@ -125,13 +132,17 @@ done
             fi
         fi
 		num_files=`echo "$play_file" | wc -l`
+		echo "$num_files Results"
         if [ $num_files -gt 1 ] ; then
-			echo "$num_files Results"
 			if [ $random_bool == 1 ] ; then
 				play_file=`echo "$play_file" | shuf --random-source=/dev/urandom`
 			fi
 			
-			if [ $play_first == 1 ] ; then
+			if [ $list_set -gt 0 ] ; then
+				play_file=`echo "$play_file" | head -$list_set`
+				echo "$play_file"
+				exit 0
+            elif [ $play_first == 1 ] ; then
 				play_file=`echo "$play_file" | head -1`
 				$run_command "$play_file"
 				exit 0
@@ -167,11 +178,15 @@ done
 			fi
 			
         elif [ -e "$play_file" ] ; then
-            $run_command "$play_file"
-            if [ $continue_set -gt 1 ] ; then
-                new_episode=`expr $episode_set + 1`
-                new_continue=`expr $continue_set - 1`
-                `playvideo -c $new_continue -s $season_set -e $new_episode "$play_string"`
+			if [ $list_set -gt 0 ] ; then
+				echo "$play_file"
+            else
+                $run_command "$play_file"
+                if [ $continue_set -gt 1 ] ; then
+                    new_episode=`expr $episode_set + 1`
+                    new_continue=`expr $continue_set - 1`
+                    `playvideo -c $new_continue -s $season_set -e $new_episode "$play_string"`
+                fi
             fi
 			exit 0
         else

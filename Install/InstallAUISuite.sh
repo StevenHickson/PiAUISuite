@@ -11,9 +11,9 @@ function dependencies() {
     read option
     if [ $option == "y" ] || [ $option == "Y" ] ; then
         if [ "$ARCH" == "armv6l" ] ; then
-            sudo apt-get install locate curl libboost-dev libboost-regex-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
+            sudo apt-get install locate curl libboost-dev libboost-regex-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-openssl-dev flac sox
         else
-            sudo apt-get install locate curl libboost-dev libboost-regex-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-gnutls-dev flac sox
+            sudo apt-get install locate curl libboost-dev libboost-regex-dev xterm xfonts-base xfonts-utils youtube-dl axel mpg123 libcurl4-openssl-dev flac sox
         fi
     fi
     fi

@@ -2,11 +2,14 @@
 BLDDEF  = -D'BUILDTS="$(shell date +"%y%m%d %H:%M:%S %z")"'
 
 #Set Architecture
-ARCH := arm
+ARCH := arm-v7
 DEVEL := rel
 LIBS := -lcurl -lboost_regex
 
 #Compilers
+ifeq ($(ARCH),arm-v7)
+CC := g++-4.8 -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+else
 ifeq ($(ARCH),arm)
 CC := g++ -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
 else
@@ -16,6 +19,7 @@ OUTPUT := x86/
 else
 CC := g++
 OUTPUT := x64/
+endif
 endif
 endif
 
@@ -35,6 +39,5 @@ clean:
 install: google speech-recog.sh voicecommand tts tts-nofill
 	install google /usr/bin/google
 	install tts /usr/bin/tts
-	install tts-nofill /usr/bin/tts-nofill
 	install speech-recog.sh /usr/bin/speech-recog.sh
 	install voicecommand /usr/bin/voicecommand

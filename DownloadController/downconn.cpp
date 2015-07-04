@@ -31,7 +31,7 @@ int Downloader::Search(string download, string *link, bool verify) {
     }
     
     //Going back to using https again
-    string torr = "https://thepiratebay.se/search/";
+    string torr = "https://thepiratebay.la/search/";
     torr += download;
     torr += "/0/7/0";
     curl_easy_setopt(hcurl, CURLOPT_URL, torr.c_str());
@@ -112,6 +112,7 @@ int Downloader::Init(void) {
 
     curl_easy_setopt(hcurl, CURLOPT_HEADER, 0);
     curl_easy_setopt(hcurl, CURLOPT_FOLLOWLOCATION, 1);
+    //curl_easy_setopt(hcurl, CURLOPT_SSL_VERIFYHOST, 0);
     curl_easy_setopt(hcurl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.8) Gecko/20100804 Gentoo Firefox/3.6.8");
     init = true;
     //curl_easy_setopt(hcurl, CURLOPT_COOKIEJAR, "cookie.txt");

@@ -10,7 +10,7 @@
 using namespace cv;
 using namespace std;
 
-void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade, bool show);
+void FindFaces(Mat &frame, CascadeClassifier &cascade, bool show);
 float MotionDetection(const Mat &past, const Mat &now, Mat *motion);
 
 #define WINDOW_NAME "Webcam"
@@ -25,8 +25,8 @@ int main( int argc, char** argv ) {
     CvCapture* capture = cvCreateCameraCapture(0) ;
 
     Mat frame, oldFrame, motion;
-    CvMemStorage* pStorage = cvCreateMemStorage(0);
-    CvHaarClassifierCascade* face_cascade = (CvHaarClassifierCascade *)cvLoad("face.xml",0,0,0);
+    CascadeClassifier face_cascade;
+    if( !face_cascade.load( "face.xml" ) ){ printf("--(!)Error loading\n"); return -1; };
     
     int args = 0;
     if(argc > 4) {
@@ -45,7 +45,7 @@ int main( int argc, char** argv ) {
             args = 2;
     }
     
-    if(window == false)
+    if(window)
         cvNamedWindow( WINDOW_NAME, CV_WINDOW_NORMAL);
     
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, width);
@@ -57,12 +57,14 @@ int main( int argc, char** argv ) {
         gettimeofday(&beg, NULL);
         if(!firstRun && args == 2)
             oldFrame = frame.clone();
-        IplImage *img = cvQueryFrame( capture );
-        if( !img ) break;
-        frame = img;
+        frame = cvQueryFrame( capture );
+        if( frame.empty() ) {
+            cout << "No image for this frame" << endl;
+            break;
+        }
         
         if(args == 1) {
-            FindFaces(&frame,pStorage,face_cascade,window);
+            FindFaces(frame,face_cascade,window);
         } else if(args == 2) {
             if(!firstRun) {
                 float total = MotionDetection(oldFrame,frame,&motion);
@@ -85,28 +87,23 @@ int main( int argc, char** argv ) {
 
     }
     cvReleaseCapture( &capture );
-    cvDestroyWindow( "Webcam" );
+    if(window)
+        cvDestroyWindow( "Webcam" );
 }
 
-void FindFaces(Mat *frame, CvMemStorage *pStorage, CvHaarClassifierCascade *cascade, bool show) {
+void FindFaces(Mat &frame, CascadeClassifier &cascade, bool show) {
     //find faces using haar recognition
-    CvSeq * pFaceRectSeq = cvHaarDetectObjects
-        (frame, cascade, pStorage,
-        1.1,                       // increase search scale by 10% each pa
-        3,                         // merge groups of three detections
-        CV_HAAR_DO_CANNY_PRUNING,  // skip regions unlikely to contain a face
-        cvSize(40,40));            // smallest size face to detect = 40x40
+    Mat gray;
+    cvtColor(frame,gray,CV_BGR2GRAY);
+    vector<Rect> faces;
+    cascade.detectMultiScale( gray, faces, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, Size(40, 40) );
 
     //draw rectangles around the face
-    for(int i=0;i<(pFaceRectSeq? pFaceRectSeq->total:0); i++ ) {
-        CvRect* r = (CvRect*)cvGetSeqElem(pFaceRectSeq, i);
-        CvPoint pt1 = { r->x, r->y };
-        CvPoint pt2 = { r->x + r->width, r->y + r->height };
-        cvRectangle(frame, pt1, pt2, CV_RGB(0,255,0), 3, 4, 0);
-    }
-    if(show)
-        imshow( WINDOW_NAME, *frame );
+    for( size_t i = 0; i < faces.size(); i++ )
+        cout << "I found a face!" << endl;
 
+    if(show)
+        imshow( WINDOW_NAME, frame );
 }
 
 inline int abs(int val) {
