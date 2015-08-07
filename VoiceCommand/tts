@@ -32,11 +32,11 @@ do
     len=${#string}
     
     #get the first 100 characters
-    wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$tmp&ie=UTF-8"
+    wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$tmp&ie=UTF-8&total=1&idx=0&client=t"
     cat "/dev/shm/tmp.mp3" >> "/dev/shm/speak.mp3"
 done
 #this will get the last remnants
-wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$string&ie=UTF-8"
+wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$string&ie=UTF-8&total=1&idx=0&client=t"
 cat "/dev/shm/tmp.mp3" >> "/dev/shm/speak.mp3"
 #now we finally say the whole thing
 cat "/dev/shm/speak.mp3" | mpg123 - 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log
