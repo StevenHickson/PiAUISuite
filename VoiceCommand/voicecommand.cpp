@@ -31,7 +31,7 @@ inline float GetVolume(string recordHW, string com_duration, bool nullout) {
     float vol = 0.0f;
     string run = "arecord -D ";
     run += recordHW;
-    run += " -f cd -t wav -d ";
+    run += " -t wav -d ";
     run += com_duration;
     run += " -r 16000 /dev/shm/noise.wav";
     if(nullout)
