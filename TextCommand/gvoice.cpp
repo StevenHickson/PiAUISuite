@@ -243,7 +243,7 @@ int GoogleVoice::Login()
 	curlbuf.clear(); cr=curl_easy_perform(hcurl);
 	if(cr!=CURLE_OK) {cout << "curl() Error: " << errorbuf << endl; return -1;}
 
-	rexp = "name=\"GALX\"\\s*type=\"hidden\"([\\s\\n\\t]*)value=\"([^\"]+)\"";
+	rexp = "name=\"GALX\"\\s*([\\s\\n\\t]*)value=\"([^\"]+)\"";
 	if(regex_search(curlbuf.c_str(), m, rexp)) 
 	{ 
         //cout << "Options are: " << m[0] << ", " << m[1] << ", " << m[2] << endl;
