@@ -10,7 +10,15 @@ static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
-    vc.Speak(vc.response);
+    if(vc.verify != 0){
+    	if(vc.response == "random"){
+		string randomResponse[]={"Yes?","Ready!","Im here!","Yup?","How can i help?","Good day!","Need anything?","Whats up?","Hey there!"};
+		int RandIndex = rand() % 9; //generates a random number between 0 and 3
+		vc.Speak( randomResponse[RandIndex]);
+	}else{
+        	vc.Speak(vc.response);
+    	}
+    }
     string command = "speech-recog.sh";
     if(vc.differentHW) {
         command += " -D ";
@@ -31,7 +39,7 @@ inline float GetVolume(string recordHW, string com_duration, bool nullout) {
     float vol = 0.0f;
     string run = "arecord -D ";
     run += recordHW;
-    run += " -f cd -t wav -d ";
+    run += " -f cd -c 1 -t wav -d ";
     run += com_duration;
     run += " -r 16000 /dev/shm/noise.wav";
     if(nullout)
@@ -290,6 +298,7 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
     string tmp = message;
     string sTmp = message;
     to_upper(sTmp);
+    printf("You said: %s\n", tmp.c_str());
     while(i < voice.size()) {
         loc = sTmp.find(voice[i]);
         if(loc == 0) {
@@ -300,36 +309,52 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                 string newcommand = tmp.substr(0,loc-1);
                 string options = message;
                 newcommand += options.substr(voice[i].length());
-                if(passthrough)
+                if(passthrough){
                     printf("%s",newcommand.c_str());
-                else {
+                } else {
                     printf("command: %s\n",newcommand.c_str());
                     system(newcommand.c_str());
                 }
             } else {
-                if(passthrough)
+                if(passthrough){
                     printf("%s",tmp.c_str());
-                else {
+                } else {
                     printf("command: %s\n",tmp.c_str());
                     system(tmp.c_str());
                 }
             }
             return;
         } else if( voice[i][0] == '~' ) {
-	    // see whether the voice keyword is *anywhere* in the message
-	    string v = voice[i].substr(1, string::npos);
-	    loc = sTmp.find(v);
-	    //printf("v: %s\tloc: %d\tsTmp: %s\n",v.c_str(),loc,sTmp.c_str());
-	    if( loc != string::npos && loc != -1) {				
-	        // if it does, return
-                if(passthrough)
-                    printf("%s",commands[i].c_str());
-                else {
-	            printf("command: %s\n",commands[i].c_str());
-		    system(commands[i].c_str());
+	        // see whether the voice keyword is *anywhere* in the message
+            string v = voice[i].substr(1, string::npos);
+            
+            loc = sTmp.find(v);
+            //printf("v: %s\tloc: %d\tsTmp: %s\n",v.c_str(),loc,sTmp.c_str());
+            if( loc != string::npos && loc != -1) {           
+                // if it does, return
+                string placeholder = "...";
+                int charPosition = commands[i].find( placeholder );
+                if(charPosition != (-1))
+                {
+                    string commandTmp = commands[i];
+                    commandTmp.replace(charPosition, placeholder.length(), tmp);
+                    
+                    if(passthrough)
+                        printf("%s",commandTmp.c_str());
+                    else {
+                        printf("command: %s\n",commandTmp.c_str());
+                        system(commandTmp.c_str());
+                    }
+                }else{
+                    if(passthrough)
+                        printf("%s",commands[i].c_str());
+                    else {
+                        printf("command: %s\n",commands[i].c_str());
+                        system(commands[i].c_str());
+                    }
                 }
-		return;
-	    }				
+            return;
+            }
 	} else {
             regex rexp("\\$(\\d+)"); cmatch m;
             if(regex_search(voice[i].c_str(), m, rexp)) {
