@@ -188,10 +188,13 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
             case 'D':
                 recordHW = string(optarg);
                 differentHW = true;
+                break;
             case 'p':
                 passthrough = true;
+                break;
             case 'I':
                 forced_input = string(optarg);
+                break;
             case 'v':
                 if(optarg && !bool(atoi(optarg)))
                     verify = false;
