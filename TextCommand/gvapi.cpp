@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 				am=optarg;
                 send_sms = true;
 				break;
-            case 'r':   // recieve messages (delete)
+            case 'r':   // receive messages (delete)
                 check_sms = true;
                 delete_sms = true;
                 break;
