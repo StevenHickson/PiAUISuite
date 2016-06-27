@@ -1,42 +1,31 @@
 #!/bin/bash
+#since google ended TTS, this wrapper-script replaces tts with pico2wave.
+#version 0.2 -now rudimentarily handles language -l param.
 
-#for the Raspberry Pi, we need to insert some sort of FILLER here since it cuts off the first bit of audio
-
-string=$@
-lang="en"
-if [ "$1" == "-l" ] ; then
-    lang="$2"
-    string=`echo "$string" | sed -r 's/^.{6}//'`
+if [ $# -lt 1 ]
+then                  #no argument entered - i need something to say
+   /usr/bin/pico2wave -w /tmp/tempsound.wav "I have nothing to say."
+   /usr/bin/aplay -q /tmp/tempsound.wav
+   rm /tmp/tempsound.wav
+   exit 0
 fi
 
-#empty the original file
-echo "" > "/dev/shm/speak.mp3"
-
-len=${#string}
-while [ $len -ge 100 ] ;
-do
-    #lets split this up so that its a maximum of 99 characters
-    tmp=${string:0:100}
-    string=${string:100}
-    
-    #now we need to make sure there aren't split words, let's find the last space and the string after it
-    lastspace=${tmp##* }
-    tmplen=${#lastspace}
-
-    #here we are shortening the tmp string
-    tmplen=`expr 100 - $tmplen` 
-    tmp=${tmp:0:tmplen}
-    
-    #now we concatenate and the string is reconstructed
-    string="$lastspace$string"
-    len=${#string}
-    
-    #get the first 100 characters
-    wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$tmp&ie=UTF-8&total=1&idx=0&client=t"
-    cat "/dev/shm/tmp.mp3" >> "/dev/shm/speak.mp3"
-done
-#this will get the last remnants
-wget -q -U Mozilla -O "/dev/shm/tmp.mp3" "https://translate.google.com/translate_tts?tl=${lang}&q=$string&ie=UTF-8&total=1&idx=0&client=t"
-cat "/dev/shm/tmp.mp3" >> "/dev/shm/speak.mp3"
-#now we finally say the whole thing
-cat "/dev/shm/speak.mp3" | mpg123 - 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log
+if [ "$1" = "-l" ]    #-l in event where user explicitly defines language.
+then                   # Note: always assumes $2 is 'en' or a valid language option.
+   lang=$2
+   if [ $lang = "en" ]   #TODO: cant find the real source of en, but if
+   then                      # i see 'en' I'm hard coding  en-US.
+      lang="en-US"       #US English, mofo, do you speak it
+   fi
+   shift 2
+   speech=$@
+   /usr/bin/pico2wave -l $lang -w /tmp/tempsound.wav "$speech"
+   /usr/bin/aplay -q /tmp/tempsound.wav
+   rm /tmp/tempsound.wav
+   exit 0
+else                  #else lets go straight to speech-output
+  speech=$@
+  /usr/bin/pico2wave -w /tmp/tempsound.wav "$speech"
+  /usr/bin/aplay -q /tmp/tempsound.wav
+  rm /tmp/tempsound.wav
+fi
