@@ -39,6 +39,7 @@ public:
     bool quiet;
     bool differentHW;
     bool passthrough;
+    bool babble;
     float thresh;
     //I'm storing the durations as strings because it makes the commands less messy and requires less overhead
     string duration;

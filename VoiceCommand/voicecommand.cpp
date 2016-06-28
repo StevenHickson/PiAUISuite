@@ -1,4 +1,5 @@
 #include "voicecommand.h"
+#include "boost/thread.hpp"
 
 using namespace std;
 using namespace boost;
@@ -6,7 +7,17 @@ using namespace boost;
 void changemode(int);
 int  kbhit(void);
 
-static const char *optString = "I:l:d:D:psb::c::v::ei::q::t:k:r:f:h?";
+static const char *optString = "I:l:d:D:psb::c::x::v::ei::q::t:k:r:f:h?";
+
+inline void ThreadedVoice(FILE *cmd, VoiceCommand &vc, char *message) {
+    printf("Found audio\n");
+    string cont_com = "curl -X POST --data-binary @/dev/shm/noise.flac --user-agent 'Mozilla/5.0' --header 'Content-Type: audio/x-flac; rate=16000' 'https://www.google.com/speech-api/v2/recognize?output=json&lang=" + vc.lang + "&key=AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw&client=Mozilla/5.0' | sed -e 's/[{}]/''/g' | awk -F\":\" '{print $4}' | awk -F\",\" '{print $1}' | tr -d '\\n'";
+    std::system("flac /dev/shm/noise.wav -f -8 --channels=1 --sample-rate 16000 -o /dev/shm/noise.flac 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log");
+    cmd = popen(cont_com.c_str(),"r");
+    fscanf(cmd,"\"%[^\"\n]\"",message);
+    vc.ProcessMessage(message);
+    fclose(cmd);
+}
 
 inline void ProcessVoice(FILE *cmd, VoiceCommand &vc, char *message) {
     printf("Found audio\n");
@@ -36,7 +47,7 @@ inline float GetVolume(string recordHW, string com_duration, bool nullout) {
     run += " -r 16000 /dev/shm/noise.wav";
     if(nullout)
         run += " 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log";
-    system(run.c_str());
+    std::system(run.c_str());
     cmd = popen("sox /dev/shm/noise.wav -n stats -s 16 2>&1 | awk '/^Max\\ level/ {print $3}'","r");
     fscanf(cmd,"%f",&vol);
     fclose(cmd);
@@ -48,7 +59,7 @@ int main(int argc, char* argv[]) {
     //this is a really crude and terrible hack.
     //It makes it so that the config file doesn't overwrite the command line options
     //And it allows the config file to be set to something random
-    system("echo \"\" > /dev/shm/voice.log"); //lazily clear out the log file
+    std::system("echo \"\" > /dev/shm/voice.log"); //lazily clear out the log file
     vc.CheckConfigParam(argc,argv);
     
     FILE *cmd = NULL;
@@ -89,14 +100,17 @@ int main(int argc, char* argv[]) {
             volume = GetVolume(vc.recordHW, vc.command_duration, true);
             if(volume > vc.thresh) {
                 //printf("Found volume %f above thresh %f\n",volume,vc.thresh);
+              if(vc.babble) {
+                        boost::thread t(ThreadedVoice,cmd,vc,message);
+               } else {
                 if(vc.verify) {
-                    system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log");
+                    std::system("flac /dev/shm/noise.wav -f --best --sample-rate 16000 -o /dev/shm/noise.flac 1>>/dev/shm/voice.log 2>>/dev/shm/voice.log");
                     cmd = popen(cont_com.c_str(),"r");
                     if(cmd == NULL)
                         printf("ERROR\n");
                     fscanf(cmd,"\"%[^\"\n]\"",message);
                     fclose(cmd);
-                    system("rm -fr /dev/shm/noise.*");
+                    std::system("rm -fr /dev/shm/noise.*");
                     //printf("message: %s, keyword: %s\n", message, vc.keyword.c_str());
                     if(iequals(message,vc.keyword.c_str())) {
                         message[0] = '\0'; //this will clear the first bit
@@ -104,6 +118,7 @@ int main(int argc, char* argv[]) {
                     }
                 } else {
                     ProcessVoice(cmd,vc,message);
+                }
                 }
                 message[0] = '\0'; //this will clear the first bit
             }
@@ -230,6 +245,9 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
                 verify = true;
                 keyword = string(optarg);
                 break;
+            case 'x':
+                babble = true;
+                break;
             case 'r':
                 response = string(optarg);
                 break;
@@ -246,7 +264,7 @@ inline void VoiceCommand::CheckCmdLineParam(int argc, char* argv[]) {
 
 void VoiceCommand::DisplayUsage() {
     //behold my laziness
-    system("man voicecommand");
+    std::system("man voicecommand");
     exit(0);
 }
 
@@ -307,14 +325,14 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                     printf("%s",newcommand.c_str());
                 else {
                     printf("command: %s\n",newcommand.c_str());
-                    system(newcommand.c_str());
+                    std::system(newcommand.c_str());
                 }
             } else {
                 if(passthrough)
                     printf("%s",tmp.c_str());
                 else {
                     printf("command: %s\n",tmp.c_str());
-                    system(tmp.c_str());
+                    std::system(tmp.c_str());
                 }
             }
             return;
@@ -329,7 +347,7 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                     printf("%s",commands[i].c_str());
                 else {
 	            printf("command: %s\n",commands[i].c_str());
-		    system(commands[i].c_str());
+		    std::system(commands[i].c_str());
                 }
 		return;
 	    }				
@@ -361,7 +379,7 @@ inline void VoiceCommand::ProcessMessage(const char* message) {
                         printf("%s",run.c_str());
                     else {
                         printf("command: %s\n",run.c_str());
-                        system(run.c_str());
+                        std::system(run.c_str());
                     }
                     return;
                 }
@@ -489,7 +507,7 @@ void VoiceCommand::EditConfig() {
     getchar();
     string edit_command = "nano ";
     edit_command += config_file;
-    system(edit_command.c_str());
+    std::system(edit_command.c_str());
 }
 
 void VoiceCommand::CheckConfig() {
@@ -533,7 +551,7 @@ int VoiceCommand::Speak(string message) {
 
     command += message;
     command += "\" 2>>/dev/shm/voice.log 1>>/dev/shm/voice.log";
-    system(command.c_str());
+    std::system(command.c_str());
 
     return 0;
 }
@@ -800,7 +818,7 @@ void VoiceCommand::Setup() {
     scanf("%s",buffer);
     if(buffer[0] == 'y') {
         printf("First I'm going to say something and see if you hear it\n");
-        system("tts \"FILLER FILL This program was created by Steven Hickson\"");
+        std::system("tts \"FILLER FILL This program was created by Steven Hickson\"");
         printf("Did you hear anything? (y/n)\n");
         scanf("%s",buffer);
         if(buffer[0] == 'n') {
@@ -828,7 +846,7 @@ void VoiceCommand::Setup() {
                 cmd = "tts " + filler;
                 cmd += string(buffer);
                 cmd += "\"";
-                system(cmd.c_str());
+                std::system(cmd.c_str());
                 response = string(buffer);
                 printf("Did that sound correct? (y/n)\n");
                 scanf("%s",buffer);
@@ -851,7 +869,7 @@ void VoiceCommand::Setup() {
                 cmd = "tts " + filler;
                 cmd += string(buffer);
                 cmd += "\"";
-                system(cmd.c_str());
+                std::system(cmd.c_str());
                 improper = string(buffer);
                 printf("Did that sound correct? (y/n)\n");
                 scanf("%s",buffer);
@@ -965,6 +983,6 @@ void VoiceCommand::Setup() {
     tmp += "\" >> ";
     tmp += config_file;
     //I am doing it this way because I'm lazy
-    system(tmp.c_str());
+    std::system(tmp.c_str());
     printf("Done setting everything up!\n");
 }
