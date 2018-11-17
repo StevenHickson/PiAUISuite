@@ -8,7 +8,7 @@ LIBS := -lcurl -lboost_regex
 
 #Compilers
 ifeq ($(ARCH),arm-v7)
-CC := g++-4.8 -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+CC := g++ -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
 else
 ifeq ($(ARCH),arm)
 CC := g++ -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
