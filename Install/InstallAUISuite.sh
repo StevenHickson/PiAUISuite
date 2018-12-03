@@ -115,7 +115,7 @@ function gtextcommand {
     read user
     echo "Enter google voice password: "
     read passwd
-    echo "Enter command keyword, ex: Cmd (this will proceed every vaild command)"
+    echo "Enter command keyword, ex: Cmd (this will proceed every valid command)"
     read key
     echo "Enter valid number to accept commands from (make sure to put the country code but not the +) ex: 15553334444"
     read number
@@ -132,7 +132,7 @@ function gtextcommand {
     tmp+="gtextcommand"
     sudo cp "$tmp" /usr/bin/gtextcommand
     #Add to cron.d
-    echo "Done installing, setting up cron script ..."
+    echo "Done installing; setting up cron script ..."
     if [ -e "/etc/cron.d/gtextcommand" ] ; then
         sudo rm -f "/etc/cron.d/gtextcommand"
     fi
@@ -159,7 +159,7 @@ function youtube() {
     DIR=$1
     USER_HOME="$2"
     echo "Install youtube scripts? y/n"
-    echo "This installs youtube, youtube-safe, youtube-dl, and other scripts that allow you to download, stream, and browse videos from many sites"
+    echo "This installs youtube, youtube-safe, youtube-dl, and other scripts that allow you to download, stream, and browse videos from many sites."
     read option
     if [ $option == "y" ] || [ $option == "Y" ] ; then
         tmp="../Youtube/"
